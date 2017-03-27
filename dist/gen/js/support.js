@@ -114,6 +114,9 @@ function getTSParamType(param, inTypesModule) {
     else if (param.type === 'string' && (param.format === 'date-time' || param.format === 'date')) {
         return 'Date';
     }
+    else if (param.type === 'file') {
+        return 'File';
+    }
     else {
         return param.type || 'any';
     }
