@@ -191,6 +191,10 @@ function groupParams(groups, param) {
         const str = `gateway.formatArrayParam(${value}, '${param.collectionFormat}', '${param.name}')`;
         group.push(`${support_1.SP.repeat(3)}${realName}: ${str}`);
     }
+    else if (param.format === 'date' || param.format === 'date-time') {
+        const str = `gateway.formatDate(${value}, '${param.format}')`;
+        group.push(`${support_1.SP.repeat(3)}${realName}: ${str}`);
+    }
     else if (param.required && param.name === name && name === realName) {
         group.push(`${support_1.SP.repeat(3)}${realName}`);
     }
