@@ -157,6 +157,7 @@ function getParamName(name) {
     const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter(n => !!n);
     return parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`);
 }
+exports.getParamName = getParamName;
 function renderOperationObject(spec, op, options) {
     const lines = [];
     const parameters = op.parameters.reduce(groupParams, {});
