@@ -38,7 +38,7 @@ function acquireRights(op: api.OperationInfo, spec: api.OpenApiSpec, options: ap
 				const securityDefinition = spec.securityDefinitions[security.id];
 				return options.getAuthorization(security, securityDefinition, op)
 							.then(auth => {
-								rights[security.id] = auth;
+								rights[security.id] = auth[security.id];
 								return rights;
 							});
 			});
