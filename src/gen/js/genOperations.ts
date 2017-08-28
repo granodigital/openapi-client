@@ -276,7 +276,7 @@ function renderSecurityInfo(security: ApiOperationSecurity[]): string[] {
     if (scopes) {
       secLines.push(`${SP.repeat(3)}scopes: ['${scopes.join(`', '`)}']`)
     }
-    secLines.push(`${SP.repeat(2)}}`)
+    secLines.push(`${SP.repeat(2)}},`)
     return secLines
   }).reduce((a, b) => a.concat(b))
 }
