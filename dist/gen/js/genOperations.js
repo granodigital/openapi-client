@@ -267,7 +267,7 @@ function renderSecurityInfo(security) {
         if (scopes) {
             secLines.push(`${support_1.SP.repeat(3)}scopes: ['${scopes.join(`', '`)}']`);
         }
-        secLines.push(`${support_1.SP.repeat(2)}}`);
+        secLines.push(`${support_1.SP.repeat(2)}},`);
         return secLines;
     }).reduce((a, b) => a.concat(b));
 }

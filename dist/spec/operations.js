@@ -35,6 +35,8 @@ function getPathOperation(method, pathInfo, spec) {
     delete op.operationId;
     op.responses = getOperationResponses(op);
     op.security = getOperationSecurity(op);
+    if (spec.security)
+        op.security = op.security.concat(getOperationSecurity(spec));
     const operation = op;
     if (operation.consumes)
         operation.contentTypes = operation.consumes;
@@ -62,7 +64,7 @@ function getOperationResponses(op) {
 }
 function getOperationSecurity(op) {
     if (!op.security || !op.security.length)
-        return;
+        return [];
     return op.security.map(def => {
         const id = Object.keys(def)[0];
         const scopes = def[id].length ? def[id] : undefined;
