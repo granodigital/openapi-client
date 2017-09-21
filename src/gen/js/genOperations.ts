@@ -161,7 +161,7 @@ function getParamSignature(param: ApiOperationParam, options: ClientOptions): st
   return signature
 }
 
-function getParamName(name: string): string {
+export function getParamName(name: string): string {
   const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter(n => !!n)
   return parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`)
 }
@@ -276,7 +276,7 @@ function renderSecurityInfo(security: ApiOperationSecurity[]): string[] {
     if (scopes) {
       secLines.push(`${SP.repeat(3)}scopes: ['${scopes.join(`', '`)}']`)
     }
-    secLines.push(`${SP.repeat(2)}}`)
+    secLines.push(`${SP.repeat(2)}},`)
     return secLines
   }).reduce((a, b) => a.concat(b))
 }

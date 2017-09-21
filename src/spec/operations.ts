@@ -40,6 +40,7 @@ function getPathOperation(method: HttpMethod, pathInfo, spec: ApiSpec): ApiOpera
   delete op.operationId
   op.responses = getOperationResponses(op)
   op.security = getOperationSecurity(op)
+  if (spec.security) op.security = op.security.concat(getOperationSecurity(spec))
 
   const operation: any = op
   if (operation.consumes) operation.contentTypes = operation.consumes
@@ -67,7 +68,7 @@ function getOperationResponses(op: any): ApiOperationResponse[] {
 }
 
 function getOperationSecurity(op: any): ApiOperationSecurity[] {
-  if (!op.security || !op.security.length) return
+  if (!op.security || !op.security.length) return []
 
   return op.security.map(def => {
     const id = Object.keys(def)[0]

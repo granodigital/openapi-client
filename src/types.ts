@@ -19,6 +19,7 @@ interface ApiSpec {
   basePath: string
   schemes: string[]
   securityDefinitions: any
+  security: any[]
   paths: any
   definitions: any
   accepts: string[]
