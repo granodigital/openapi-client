@@ -174,9 +174,9 @@ function buildBody(bodyParams: any) {
 
 function resolveAuthHeaderName(headerName: string) {
 	if (options.authorizationHeader && headerName.toLowerCase() === 'authorization') {
-		return options.authorizationHeader;;
+		return options.authorizationHeader;
 	} else {
-		return headerName;;
+		return headerName;
 	}
 }
 
@@ -189,15 +189,15 @@ function applyAuthorization(req: any, rights: any, spec: api.OpenApiSpec) {
 				const creds = `${rightsInfo.username}:${rightsInfo.password}`;
 				const token = (typeof window !== 'undefined' && window.btoa)
 					? window.btoa(creds)
-					: new Buffer(creds).toString('base64');;
-				req.header[resolveAuthHeaderName('Authorization')] = `Basic ${token}`;;
-				break;;
+					: new Buffer(creds).toString('base64');
+				req.header[resolveAuthHeaderName('Authorization')] = `Basic ${token}`;
+				break;
 			case 'oauth2':
-				req.header[resolveAuthHeaderName('Authorization')] = `Bearer ${rightsInfo.token}`;;
-				break;;
+				req.header[resolveAuthHeaderName('Authorization')] = `Bearer ${rightsInfo.token}`;
+				break;
 			case 'apiKey':
 				if (definition.in === 'header') {
-					req.header[resolveAuthHeaderName(definition.name)] = rightsInfo.apiKey;;
+					req.header[resolveAuthHeaderName(definition.name)] = rightsInfo.apiKey;
 				} else if (definition.in === 'query') {
 					req.query[definition.name] = rightsInfo.apiKey;
 				} else {
@@ -264,7 +264,7 @@ function formatServiceError(response: api.FetchResponse, data, options: api.Serv
 }
 
 function processError(req, error) {
-	return Promise.resolve(<api.ResponseOutcome>{ res: { raw: {}, data: error, error: true } });
+	return Promise.resolve(<api.ResponseOutcome>{ res: { raw: {}, data: { message: error.message }, error: true } });
 }
 
 const COLLECTION_DELIM = { csv: ',', multi: '&', pipes: '|', ssv: ' ', tsv: '\t' };

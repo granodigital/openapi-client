@@ -169,6 +169,7 @@ export interface ServiceOptions {
   formatServiceError?: (response: FetchResponse, data: any) => ServiceError${support_1.ST}
   processRequest?: (op: OperationInfo, reqInfo: RequestInfo) => RequestInfo${support_1.ST}
   processResponse?: (req: api.ServiceRequest, res: Response<any>, attempt: number) => Promise<api.ResponseOutcome>${support_1.ST}
+  authorizationHeader?: string${support_1.ST}
 }
 
 export type OperationRights = {[key: string]: OperationRightsInfo}${support_1.ST}
