@@ -1,0 +1,24 @@
+{
+	"folders":
+	[
+		{
+			"name": "OpenAPI Client",
+			"follow_symlinks": true,
+			"path": ".",
+			"folder_exclude_patterns": [
+				".sass-cache",
+				".tmp",
+				".vscode",
+				"node_modules",
+				"dist"
+			],
+			"file_exclude_patterns": []
+		}
+	],
+	"settings":
+	{
+		"translate_tabs_to_spaces": false,
+		"trim_trailing_white_space_on_save": true,
+		"ensure_newline_at_eof_on_save": true
+	}
+}

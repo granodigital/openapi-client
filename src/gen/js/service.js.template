@@ -1,5 +1,6 @@
 // Auto-generated, edits will be overwritten
 import spec from './spec';
+import { isEmpty } from 'lodash';
 
 export class ServiceError extends Error {}
 
@@ -191,7 +192,9 @@ function applyAuthorization(req, rights, spec) {
 				break;
 			case 'apiKey':
 				if (definition.in === 'header') {
-					req.header[resolveAuthHeaderName(definition.name)] = rightsInfo.apiKey;
+					// Empty headers break Edge
+					if (!isEmpty(rightsInfo.apiKey))
+						req.header[resolveAuthHeaderName(definition.name)] = rightsInfo.apiKey;
 				} else if (definition.in === 'query') {
 					req.query[definition.name] = rightsInfo.apiKey;
 				} else {
