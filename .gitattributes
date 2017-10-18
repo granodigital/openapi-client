@@ -1,1 +1,3 @@
 dist/** -diff
+package-lock.json -diff
+yarn.lock -diff
