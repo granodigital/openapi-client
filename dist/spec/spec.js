@@ -1,19 +1,23 @@
 "use strict";
 const YAML = require('js-yaml');
-function resolveSpec(src, options) {
+function resolveSpec(src, options, authKey) {
     if (!options)
         options = {};
     if (typeof src === 'string') {
-        return loadJson(src).then(spec => formatSpec(spec, src, options));
+        return loadJson(src, authKey).then(spec => formatSpec(spec, src, options));
     }
     else {
         return Promise.resolve(formatSpec(src, null, options));
     }
 }
 exports.resolveSpec = resolveSpec;
-function loadJson(src) {
+function loadJson(src, authKey) {
     if (/^https?:\/\//im.test(src)) {
-        return fetch(src)
+        const headers = new Headers();
+        if (authKey)
+            headers.append("Open-Api-Spec-Auth-Key", authKey);
+        const request = new Request(src, { headers: headers });
+        return fetch(request)
             .then(response => response.json());
     }
     else if (String(process) === '[object process]') {
