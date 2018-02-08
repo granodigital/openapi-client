@@ -7,7 +7,7 @@ import * as assert from 'assert'
 export function genCode(options: ClientOptions): Promise<any> {
   return verifyOptions(options)
     .then(options =>
-      resolveSpec(options.src, { ignoreRefType: '#/definitions/' })
+      resolveSpec(options.src, { ignoreRefType: '#/definitions/' }, options.authKey)
         .then(spec => gen(spec, options))
     )
 }

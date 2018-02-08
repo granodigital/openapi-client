@@ -6,7 +6,7 @@ const util_1 = require('./gen/util');
 const assert = require('assert');
 function genCode(options) {
     return verifyOptions(options)
-        .then(options => spec_1.resolveSpec(options.src, { ignoreRefType: '#/definitions/' })
+        .then(options => spec_1.resolveSpec(options.src, { ignoreRefType: '#/definitions/' }, options.authKey)
         .then(spec => gen(spec, options)));
 }
 exports.genCode = genCode;

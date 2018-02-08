@@ -7,18 +7,21 @@ export interface SpecOptions {
    ignoreRefType?: string
 }
 
-export function resolveSpec(src: string | Object, options?: SpecOptions): Promise<ApiSpec> {
+export function resolveSpec(src: string | Object, options?: SpecOptions, authKey?: string): Promise<ApiSpec> {
   if (!options) options = {}
   if (typeof src === 'string') {
-    return loadJson(src).then(spec => formatSpec(spec, src, options))
+    return loadJson(src, authKey).then(spec => formatSpec(spec, src, options))
   } else {
     return Promise.resolve(formatSpec(<ApiSpec> src, null, options))
   }
 }
 
-function loadJson(src: string): Promise<ApiSpec> {
+function loadJson(src: string, authKey: string): Promise<ApiSpec> {
   if (/^https?:\/\//im.test(src)) {
-    return fetch(src)
+    const headers = new Headers();
+    if(authKey) headers.append("Open-Api-Spec-Auth-Key", authKey);
+    const request = new Request(src, { headers });
+    return fetch(request)
       .then(response => response.json())
   } else if (String(process) === '[object process]') {
     return readFile(src)
