@@ -83,7 +83,7 @@ export function getTSParamType(param: any, inTypesModule?: boolean): string {
         : `api.${type}[]`
     } else if (param.items.oneOf) {
       return `(${param.items.oneOf
-        .map(schema => getTSParamType(schema))
+        .map(schema => getTSParamType(schema, inTypesModule))
         .map(type => `${type}`)
         .join(' | ')})[]`
     } else {
@@ -95,6 +95,8 @@ export function getTSParamType(param: any, inTypesModule?: boolean): string {
       return `{[key: string]: ${getTSParamType(extraProps, inTypesModule)}}`
     }
     return 'any'
+  } else if (Array.isArray(param.oneOf)) {
+    return param.oneOf.map(schema => getTSParamType(schema, inTypesModule)).join(' | ')
   } else if (param.type === 'integer') {
     return 'number'
   } else if (param.type === 'string' && (param.format === 'date-time' || param.format === 'date')) {

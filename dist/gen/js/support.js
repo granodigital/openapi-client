@@ -99,7 +99,7 @@ function getTSParamType(param, inTypesModule) {
         }
         else if (param.items.oneOf) {
             return `(${param.items.oneOf
-                .map(schema => getTSParamType(schema))
+                .map(schema => getTSParamType(schema, inTypesModule))
                 .map(type => `${type}`)
                 .join(' | ')})[]`;
         }
@@ -113,6 +113,9 @@ function getTSParamType(param, inTypesModule) {
             return `{[key: string]: ${getTSParamType(extraProps, inTypesModule)}}`;
         }
         return 'any';
+    }
+    else if (Array.isArray(param.oneOf)) {
+        return param.oneOf.map(schema => getTSParamType(schema, inTypesModule)).join(' | ');
     }
     else if (param.type === 'integer') {
         return 'number';
