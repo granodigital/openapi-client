@@ -98,10 +98,10 @@ function getTSParamType(param, inTypesModule) {
                 : `api.${type}[]`;
         }
         else if (param.items.oneOf) {
-            return param.items.oneOf
+            return `(${param.items.oneOf
                 .map(schema => getTSParamType(schema))
-                .map(type => `${type}[]`)
-                .join(' | ');
+                .map(type => `${type}`)
+                .join(' | ')})[]`;
         }
         else {
             return 'any[]';
