@@ -64,7 +64,7 @@ export function getTSParamType(param: any, inTypesModule?: boolean): string {
   }
   if (param.$ref) {
     const type = param.$ref.split('/').pop()
-    return inTypesModule 
+    return inTypesModule
       ? type
       : `api.${type}`
   } else if (param.schema) {
@@ -78,9 +78,14 @@ export function getTSParamType(param: any, inTypesModule?: boolean): string {
       }
     } else if (param.items.$ref) {
       const type = param.items.$ref.split('/').pop()
-      return inTypesModule 
+      return inTypesModule
         ? `${type}[]`
         : `api.${type}[]`
+    } else if (param.items.oneOf) {
+      return param.items.oneOf
+        .map(schema => getTSParamType(schema))
+        .map(type => `${type}[]`)
+        .join(' | ')
     } else {
       return 'any[]'
     }
