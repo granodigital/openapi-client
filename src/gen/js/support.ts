@@ -141,7 +141,7 @@ function getKey(key, schema) {
     suffix = ''
   }
 
-  if (key.match(/^[a-z0-9]+$/i)) {
+  if (key.match(/^[a-z0-9_]+$/i)) {
     return `${key}${suffix}`
   }
   return `'${key}'${suffix}`
