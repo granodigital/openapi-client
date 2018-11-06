@@ -108,7 +108,8 @@ export function getTSParamType(param: any, inTypesModule?: boolean, indent = '  
     if (param.properties) {
       const props = Object.keys(param.properties);
       return commaLists`{
-  ${indent}${props.map(key => `${key}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
+  ${indent}${props.map(key =>
+    `${sanitizeKey(key)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
 ${indent}}`
     }
     console.warn(yellow('Missing type information:'), param);
@@ -127,4 +128,11 @@ ${indent}}`
     console.warn(yellow('Missing type information:'), param);
     return 'any'
   }
+}
+
+function sanitizeKey(key) {
+  if (key.match(/^[a-z0-9]+$/i)) {
+    return key
+  }
+  return `'${key}'`
 }

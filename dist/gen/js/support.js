@@ -125,7 +125,7 @@ function getTSParamType(param, inTypesModule, indent = '  ') {
         if (param.properties) {
             const props = Object.keys(param.properties);
             return common_tags_1.commaLists `{
-  ${indent}${props.map(key => `${key}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
+  ${indent}${props.map(key => `${sanitizeKey(key)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
 ${indent}}`;
         }
         console.warn(chalk_1.yellow('Missing type information:'), param);
@@ -152,3 +152,9 @@ ${indent}}`;
     }
 }
 exports.getTSParamType = getTSParamType;
+function sanitizeKey(key) {
+    if (key.match(/^[a-z0-9]+$/i)) {
+        return key;
+    }
+    return `'${key}'`;
+}
