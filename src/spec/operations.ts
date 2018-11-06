@@ -53,7 +53,6 @@ function getPathOperation(method: HttpMethod, pathInfo, spec: ApiSpec): ApiOpera
   delete op.operationId
   op.responses = getOperationResponses(op)
   op.security = getOperationSecurity(op, spec)
-  if (spec.security) op.security = op.security.concat(getOperationSecurity(spec))
 
   const operation: any = op
   if (operation.consumes) operation.contentTypes = operation.consumes

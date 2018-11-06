@@ -1,5 +1,6 @@
 "use strict";
-const YAML = require('js-yaml');
+Object.defineProperty(exports, "__esModule", { value: true });
+const YAML = require("js-yaml");
 function resolveSpec(src, options, authKey) {
     if (!options)
         options = {};
@@ -16,7 +17,7 @@ function loadJson(src, authKey) {
         const headers = new Headers();
         if (authKey)
             headers.append("Open-Api-Spec-Auth-Key", authKey);
-        const request = new Request(src, { headers: headers });
+        const request = new Request(src, { headers });
         return fetch(request)
             .then(response => response.json());
     }

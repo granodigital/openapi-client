@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 "use strict";
-const program = require('commander');
-const chalk = require('chalk');
-const index_1 = require('./index');
+Object.defineProperty(exports, "__esModule", { value: true });
+const program = require("commander");
+const chalk = require("chalk");
+const index_1 = require("./index");
 const args = program
     .version(require('../package.json').version)
     .option('-s, --src <url|path>', 'The url or path to the Open API spec file', String, process.env.OPEN_API_SRC)
@@ -19,7 +20,11 @@ function complete(spec) {
     process.exit(0);
 }
 function error(e) {
-    const msg = (e instanceof Error) ? e.message : e;
-    console.error(chalk.red(msg));
+    if (e instanceof Error) {
+        console.error(chalk.red(e.message), e.stack);
+    }
+    else {
+        console.error(chalk.red(e));
+    }
     process.exit(1);
 }

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const SUPPORTED_METHODS = [
     'get',
     'put',
@@ -15,28 +16,37 @@ function getOperations(spec) {
 exports.getOperations = getOperations;
 function getPaths(spec) {
     return Object.keys(spec.paths || {})
-        .map(path => Object.assign({ path: path }, spec.paths[path]));
+        .map(path => Object.assign({ path }, spec.paths[path]));
 }
 function getPathOperations(pathInfo, spec) {
     return Object.keys(pathInfo)
         .filter(key => !!~SUPPORTED_METHODS.indexOf(key))
         .map(method => getPathOperation(method, pathInfo, spec));
 }
+function inheritPathParams(op, spec, pathInfo) {
+    let pathParams = spec.paths[pathInfo.path].parameters;
+    if (pathParams) {
+        pathParams.forEach(pathParam => {
+            if (!op.parameters.some(p => p.name === pathParam.name && p.in === pathParam.in)) {
+                op.parameters.push(Object.assign({}, pathParam));
+            }
+        });
+    }
+}
 function getPathOperation(method, pathInfo, spec) {
-    const op = Object.assign({ method: method, path: pathInfo.path, parameters: [] }, pathInfo[method]);
+    const op = Object.assign({ method, path: pathInfo.path, parameters: [] }, pathInfo[method]);
     op.id = op.operationId;
     // if there's no explicit operationId given, create one based on the method and path
     if (!op.id) {
         op.id = method + pathInfo.path;
-        op.id = op.id.replace(/[\/{(?\/{)]([^{.])/g, (_, m) => m.toUpperCase());
-        op.id = op.id.replace(/[\/}]/g, '');
+        op.id = op.id.replace(/[\/{(?\/{)\-]([^{.])/g, (_, m) => m.toUpperCase());
+        op.id = op.id.replace(/[\/}\-]/g, '');
     }
+    inheritPathParams(op, spec, pathInfo);
     op.group = getOperationGroupName(op);
     delete op.operationId;
     op.responses = getOperationResponses(op);
-    op.security = getOperationSecurity(op);
-    if (spec.security)
-        op.security = op.security.concat(getOperationSecurity(spec));
+    op.security = getOperationSecurity(op, spec);
     const operation = op;
     if (operation.consumes)
         operation.contentTypes = operation.consumes;
@@ -62,12 +72,20 @@ function getOperationResponses(op) {
         return info;
     });
 }
-function getOperationSecurity(op) {
-    if (!op.security || !op.security.length)
+function getOperationSecurity(op, spec) {
+    let security;
+    if (op.security && op.security.length) {
+        security = op.security;
+    }
+    else if (spec.security && spec.security.length) {
+        security = spec.security;
+    }
+    else {
         return [];
-    return op.security.map(def => {
+    }
+    return security.map(def => {
         const id = Object.keys(def)[0];
         const scopes = def[id].length ? def[id] : undefined;
-        return { id: id, scopes: scopes };
+        return { id, scopes };
     });
 }

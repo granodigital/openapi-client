@@ -23,7 +23,10 @@ function complete(spec: ApiSpec) {
 }
 
 function error(e) {
-  const msg = (e instanceof Error) ? e.message : e
-  console.error(chalk.red(msg))
+  if (e instanceof Error) {
+    console.error(chalk.red(e.message), e.stack)
+  } else {
+    console.error(chalk.red(e))
+  }
   process.exit(1)
 }

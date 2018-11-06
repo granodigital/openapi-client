@@ -1,7 +1,8 @@
 "use strict";
-const FS = require('fs');
-const PATH = require('path');
-const mkdirp = require('mkdirp');
+Object.defineProperty(exports, "__esModule", { value: true });
+const FS = require("fs");
+const PATH = require("path");
+const mkdirp = require("mkdirp");
 function exists(filePath) {
     try {
         return FS.lstatSync(filePath);

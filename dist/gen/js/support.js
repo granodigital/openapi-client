@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const common_tags_1 = require("common-tags");
+const chalk_1 = require("chalk");
 exports.DOC = ' * ';
 exports.DEFAULT_SP = '  ';
 exports.SP = exports.DEFAULT_SP;
@@ -63,8 +66,10 @@ function getDocType(param) {
     }
 }
 exports.getDocType = getDocType;
-function getTSParamType(param, inTypesModule) {
+const primitives = new Set(['string', 'number', 'boolean']);
+function getTSParamType(param, inTypesModule, indent = '  ') {
     if (!param) {
+        console.warn(chalk_1.yellow('Missing type information.'));
         return 'any';
     }
     else if (param.enum) {
@@ -80,15 +85,19 @@ function getTSParamType(param, inTypesModule) {
             : `api.${type}`;
     }
     else if (param.schema) {
-        return getTSParamType(param.schema, inTypesModule);
+        return getTSParamType(param.schema, inTypesModule, indent);
     }
     else if (param.type === 'array') {
+        if (!param.items) {
+            console.warn(chalk_1.yellow('Missing type information:'), param);
+            return 'any[]';
+        }
         if (param.items.type) {
             if (param.items.enum) {
-                return `(${getTSParamType(param.items, inTypesModule)})[]`;
+                return `(${getTSParamType(param.items, inTypesModule, indent)})[]`;
             }
             else {
-                return `${getTSParamType(param.items, inTypesModule)}[]`;
+                return `${getTSParamType(param.items, inTypesModule, indent)}[]`;
             }
         }
         else if (param.items.$ref) {
@@ -99,23 +108,31 @@ function getTSParamType(param, inTypesModule) {
         }
         else if (param.items.oneOf) {
             return `(${param.items.oneOf
-                .map(schema => getTSParamType(schema, inTypesModule))
+                .map(schema => getTSParamType(schema, inTypesModule, indent))
                 .map(type => `${type}`)
                 .join(' | ')})[]`;
         }
         else {
+            console.warn(chalk_1.yellow('Missing type information:'), param);
             return 'any[]';
         }
     }
     else if (param.type === 'object') {
         if (param.additionalProperties) {
             const extraProps = param.additionalProperties;
-            return `{[key: string]: ${getTSParamType(extraProps, inTypesModule)}}`;
+            return `{[key: string]: ${getTSParamType(extraProps, inTypesModule, indent)}}`;
         }
+        if (param.properties) {
+            const props = Object.keys(param.properties);
+            return common_tags_1.commaLists `{
+  ${indent}${props.map(key => `${key}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
+${indent}}`;
+        }
+        console.warn(chalk_1.yellow('Missing type information:'), param);
         return 'any';
     }
     else if (Array.isArray(param.oneOf)) {
-        return param.oneOf.map(schema => getTSParamType(schema, inTypesModule)).join(' | ');
+        return param.oneOf.map(schema => getTSParamType(schema, inTypesModule, indent)).join(' | ');
     }
     else if (param.type === 'integer') {
         return 'number';
@@ -126,8 +143,12 @@ function getTSParamType(param, inTypesModule) {
     else if (param.type === 'file') {
         return 'File';
     }
+    else if (primitives.has(param.type)) {
+        return param.type;
+    }
     else {
-        return param.type || 'any';
+        console.warn(chalk_1.yellow('Missing type information:'), param);
+        return 'any';
     }
 }
 exports.getTSParamType = getTSParamType;
