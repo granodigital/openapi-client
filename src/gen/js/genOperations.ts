@@ -163,7 +163,53 @@ function getParamSignature(param: ApiOperationParam, options: ClientOptions): st
 
 export function getParamName(name: string): string {
   const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter(n => !!n)
-  return parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`)
+  const reduced = parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`)
+  return escapeReservedWords(reduced)
+}
+
+function escapeReservedWords(name: string): string {
+  let escapedName = name
+
+  const reservedWords = [
+    'break',
+    'case',
+    'catch',
+    'class',
+    'const',
+    'continue',
+    'debugger',
+    'default',
+    'delete',
+    'do',
+    'else',
+    'export',
+    'extends',
+    'finally',
+    'for',
+    'function',
+    'if',
+    'import',
+    'in',
+    'instanceof',
+    'new',
+    'return',
+    'super',
+    'switch',
+    'this',
+    'throw',
+    'try',
+    'typeof',
+    'var',
+    'void',
+    'while',
+    'with',
+    'yield'
+  ]
+
+  if (reservedWords.indexOf(name) >= 0) {
+    escapedName = name + '_'
+  }
+  return escapedName
 }
 
 function renderOperationObject(spec: ApiSpec, op: ApiOperation, options: ClientOptions): string[] {
@@ -268,7 +314,7 @@ function renderOperationInfo(spec: ApiSpec, op: ApiOperation, options: ClientOpt
 }
 
 function renderSecurityInfo(security: ApiOperationSecurity[]): string[] {
-  return security.map(sec => {
+  return security.map((sec, i) => {
     const scopes = sec.scopes
     const secLines = []
     secLines.push(`${SP.repeat(2)}{`)
@@ -276,7 +322,7 @@ function renderSecurityInfo(security: ApiOperationSecurity[]): string[] {
     if (scopes) {
       secLines.push(`${SP.repeat(3)}scopes: ['${scopes.join(`', '`)}']`)
     }
-    secLines.push(`${SP.repeat(2)}},`)
+    secLines.push(`${SP.repeat(2)}}${i + 1 < security.length ? ',': ''}`)
     return secLines
   }).reduce((a, b) => a.concat(b))
 }

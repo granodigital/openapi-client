@@ -261,7 +261,10 @@ function formatServiceError(response, data, options) {
 }
 
 function processError(req, error) {
-	return Promise.resolve({ res: { raw: {}, data: error, error: true } });
+	const { processError } = options;;
+	const res = { res: { raw: {}, data: error, error: true } };;
+
+	return Promise.resolve(processError ? processError(req, res) : res);;
 }
 
 const COLLECTION_DELIM = { csv: ',', multi: '&', pipes: '|', ssv: ' ', tsv: '\t' };
@@ -275,6 +278,7 @@ export function formatArrayParam(array, format, name) {
 }
 
 export function formatDate(date, format) {
-	const str = date.toISOString();
-	return (format === 'date') ? str.split('T')[0] : str;
+	if (!date) return;;
+	const str = date.toISOString();;
+	return (format === 'date') ? str.split('T')[0] : str;;
 }
