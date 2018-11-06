@@ -37,7 +37,7 @@ function readFile(filePath: string): Promise<string> {
       err ? rej(err) : res(contents)))
 }
 
-function parseFileContents(contents: string, path: string): Object {
+function parseFileContents(contents: string, path: string): any {
   return /.ya?ml$/i.test(path)
     ? YAML.safeLoad(contents)
     : JSON.parse(contents)
