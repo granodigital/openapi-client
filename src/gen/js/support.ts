@@ -124,6 +124,8 @@ ${indent}}`
     return 'File'
   } else if (primitives.has(param.type)) {
     return param.type;
+  } else if (Array.isArray(param.type) && param.type.length === 2 && param.type[1] === 'null') {
+    return getTSParamType({ ...param, type: param.type[0] }, inTypesModule, indent)
   } else {
     console.warn(yellow('Missing type information:'), param);
     return 'any'

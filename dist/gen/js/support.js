@@ -146,6 +146,9 @@ ${indent}}`;
     else if (primitives.has(param.type)) {
         return param.type;
     }
+    else if (Array.isArray(param.type) && param.type.length === 2 && param.type[1] === 'null') {
+        return getTSParamType(Object.assign({}, param, { type: param.type[0] }), inTypesModule, indent);
+    }
     else {
         console.warn(chalk_1.yellow('Missing type information:'), param);
         return 'any';
