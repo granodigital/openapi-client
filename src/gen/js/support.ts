@@ -60,7 +60,7 @@ export function getDocType(param: any): string {
 
 const primitives = new Set(['string', 'number', 'boolean']);
 
-export function getTSParamType(param: any, inTypesModule?: boolean, indent = '  '): string {
+export function getTSParamType(param: any, inTypesModule?: boolean, indent = SP): string {
   if (!param) {
     console.warn(yellow('Missing type information.'));
     return 'any'
@@ -109,7 +109,7 @@ export function getTSParamType(param: any, inTypesModule?: boolean, indent = '  
       const props = Object.keys(param.properties);
       return commaLists`{
   ${indent}${props.map(key =>
-    `${getKey(key, param)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}  `)}`)}
+    `${getKey(key, param)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}${SP}`)}`)}
 ${indent}}`
     }
     console.warn(yellow('Missing type information:'), param);
