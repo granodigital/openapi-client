@@ -137,9 +137,6 @@ ${indent}}`;
     else if (param.type === 'integer') {
         return 'number';
     }
-    else if (param.type === 'string' && (param.format === 'date-time' || param.format === 'date')) {
-        return 'Date';
-    }
     else if (param.type === 'file') {
         return 'File';
     }

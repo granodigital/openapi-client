@@ -118,8 +118,6 @@ ${indent}}`
     return param.oneOf.map(schema => getTSParamType(schema, inTypesModule, indent)).join(' | ')
   } else if (param.type === 'integer') {
     return 'number'
-  } else if (param.type === 'string' && (param.format === 'date-time' || param.format === 'date')) {
-    return 'Date'
   } else if (param.type === 'file') {
     return 'File'
   } else if (primitives.has(param.type)) {
