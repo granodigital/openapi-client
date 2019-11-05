@@ -58,7 +58,7 @@ ${isTs ? `export type ${actionComplete} = ${returnType}${support_1.ST}` : ''}
 
 export function ${op.id}(${paramSignature})${isTs ? ': any' : ''} {
   return dispatch => {
-    dispatch({ type: ${actionStart}, meta: { info, options } })${support_1.ST}
+    dispatch({ type: ${actionStart}, meta: { info, params: {${paramSignature}} } })${support_1.ST}
     return ${op.group}.${op.id}(${params})
       .then(response => dispatch({
         type: ${actionComplete},
