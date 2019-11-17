@@ -122,7 +122,7 @@ function buildUrl(op: api.OperationInfo, baseUrl: string, parameters, spec: api.
 }
 
 function getBaseUrl(spec: api.OpenApiSpec) {
-  return options.url || `${spec.schemes[0] || 'https'}://${spec.host}${spec.basePath}`;
+	return options.url || `${spec.schemes[0] || 'https'}://${spec.host}${spec.basePath}`;
 }
 
 function createQueryParam(name: string, value: string) {
@@ -149,17 +149,20 @@ function createQueryString(query) {
 function buildHeaders(op: api.OperationInfo, parameters) {
 	const headers: any = {};
 
-	let accepts;
-	if (op.accepts && op.accepts.length) accepts = op.accepts;
-	else if (spec.accepts && spec.accepts.length) accepts = spec.accepts;
-	else accepts = [ 'application/json' ];
+	// Do not add any default headers to get requests, they break link rel=preload.
+	if (op.method !== 'get') {
+		let accepts;
+		if (op.accepts && op.accepts.length) accepts = op.accepts;
+		else if (spec.accepts && spec.accepts.length) accepts = spec.accepts;
+		else accepts = [ 'application/json' ];
 
-	headers.Accept = accepts.join(', ');
+		headers.Accept = accepts.join(', ');
 
-	let contentType;
-	if (op.contentTypes && op.contentTypes[0]) contentType = op.contentTypes[0];
-	else if (spec.contentTypes && spec.contentTypes[0]) contentType = spec.contentTypes[0];
-	if (contentType) headers['Content-Type'] = contentType;
+		let contentType;
+		if (op.contentTypes && op.contentTypes[0]) contentType = op.contentTypes[0];
+		else if (spec.contentTypes && spec.contentTypes[0]) contentType = spec.contentTypes[0];
+		if (contentType) headers['Content-Type'] = contentType;
+	}
 
 	return Object.assign(headers, parameters.header);
 }
