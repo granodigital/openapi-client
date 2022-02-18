@@ -4,20 +4,20 @@ import { program } from "commander";
 import chalk from "chalk";
 import { genCode } from "./index";
 
-const args: any = program
+const args = program
 	.version(require("../package.json").version)
-	.option(
+	.requiredOption(
 		"-s, --src <url|path>",
 		"The url or path to the Open API spec file",
 		String,
 		process.env.OPEN_API_SRC
 	)
-	.option(
+	.requiredOption(
 		"-o, --outDir <dir>",
 		"The path to the directory where files should be generated",
 		process.env.OPEN_API_OUT
 	)
-	.option(
+	.requiredOption(
 		"-l, --language <js|ts>",
 		"The language of code to generate",
 		process.env.OPEN_API_LANG
@@ -42,18 +42,17 @@ const args: any = program
 		"Indentation to use, defaults to 2 spaces",
 		process.env.OPEN_API_INDENT
 	)
-	.parse(process.argv);
+	.parse(process.argv)
+	.opts<ClientOptions>();
 
-genCode(args).then(complete, error);
-
-function complete(spec: ApiSpec) {
+function onComplete() {
 	console.info(
 		chalk.bold.cyan(`Api ${args.src} code generated into ${args.outDir}`)
 	);
 	process.exit(0);
 }
 
-function error(e) {
+function onError(e: unknown) {
 	if (e instanceof Error) {
 		console.error(chalk.red(e.message), e.stack);
 	} else {
@@ -61,3 +60,5 @@ function error(e) {
 	}
 	process.exit(1);
 }
+
+genCode(args).then(onComplete, onError);
