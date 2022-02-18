@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getOperations = void 0;
 const SUPPORTED_METHODS = [
     'get',
     'put',

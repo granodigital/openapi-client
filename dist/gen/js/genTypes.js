@@ -1,16 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.genTypesFile = void 0;
 const util_1 = require("../util");
 const support_1 = require("./support");
 function genTypes(spec, options) {
     const file = genTypesFile(spec, options);
-    util_1.writeFileSync(file.path, file.contents);
+    (0, util_1.writeFileSync)(file.path, file.contents);
 }
 exports.default = genTypes;
 function genTypesFile(spec, options) {
     const lines = [];
-    util_1.join(lines, renderHeader());
-    util_1.join(lines, renderDefinitions(spec, options));
+    (0, util_1.join)(lines, renderHeader());
+    (0, util_1.join)(lines, renderDefinitions(spec, options));
     return {
         path: `${options.outDir}/types.${options.language}`,
         contents: lines.join('\n')
@@ -32,12 +33,12 @@ function renderDefinitions(spec, options) {
     Object.keys(defs).forEach(name => {
         const def = defs[name];
         if (isTs) {
-            util_1.join(typeLines, renderTsType(name, def, options));
+            (0, util_1.join)(typeLines, renderTsType(name, def, options));
         }
-        util_1.join(docLines, renderTypeDoc(name, def));
+        (0, util_1.join)(docLines, renderTypeDoc(name, def));
     });
     if (isTs) {
-        util_1.join(typeLines, renderTsDefaultTypes());
+        (0, util_1.join)(typeLines, renderTsDefaultTypes());
         typeLines.push('}');
     }
     return isTs ? typeLines.concat(docLines) : docLines;
@@ -66,8 +67,8 @@ function renderTsType(name, def, options) {
     const optionalPropLines = optionalProps
         .map(prop => renderTsTypeProp(prop, def.properties[prop], false))
         .reduce((a, b) => a.concat(b), []);
-    util_1.join(lines, requiredPropLines);
-    util_1.join(lines, optionalPropLines);
+    (0, util_1.join)(lines, requiredPropLines);
+    (0, util_1.join)(lines, optionalPropLines);
     lines.push('}');
     lines.push('');
     return lines;
@@ -84,7 +85,7 @@ function renderTsInheritance(name, allOf, options) {
 }
 function renderTsTypeProp(prop, info, required) {
     const lines = [];
-    const type = support_1.getTSParamType(info, true);
+    const type = (0, support_1.getTSParamType)(info, true);
     if (info.description) {
         lines.push(`${support_1.SP}/**`);
         lines.push(`${support_1.SP}${support_1.DOC}` + (info.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
@@ -177,7 +178,7 @@ export interface ServiceOptions {
    * Function which should resolve rights for a request (e.g auth token) given
    * the OpenAPI defined security requirements of the operation to be executed.
    */
-  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<OperationRights>${support_1.ST}
+  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<OperationRightsInfo>${support_1.ST}
   /**
    * Given an error response, custom format and return a ServiceError
    */
@@ -318,11 +319,11 @@ function renderTypeDoc(name, def) {
     const propLines = Object.keys(def.properties).map(prop => {
         const info = def.properties[prop];
         const description = (info.description || '').trim().replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
-        return `${support_1.DOC}@property {${support_1.getDocType(info)}} ${prop} ${description}`;
+        return `${support_1.DOC}@property {${(0, support_1.getDocType)(info)}} ${prop} ${description}`;
     });
     if (propLines.length)
         lines.push(`${support_1.DOC}`);
-    util_1.join(lines, propLines);
+    (0, util_1.join)(lines, propLines);
     lines.push(' */');
     lines.push('');
     return lines;

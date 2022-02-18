@@ -1,24 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getParamName = exports.renderParamSignature = exports.renderOperationGroup = exports.genOperationGroupFiles = void 0;
 const util_1 = require("../util");
 const support_1 = require("./support");
 function genOperations(spec, operations, options) {
     const files = genOperationGroupFiles(spec, operations, options);
-    files.forEach(file => util_1.writeFileSync(file.path, file.contents));
+    files.forEach(file => (0, util_1.writeFileSync)(file.path, file.contents));
 }
 exports.default = genOperations;
 function genOperationGroupFiles(spec, operations, options) {
-    const groups = util_1.groupOperationsByGroupName(operations);
+    const groups = (0, util_1.groupOperationsByGroupName)(operations);
     const files = [];
     for (let name in groups) {
         const group = groups[name];
         const lines = [];
-        util_1.join(lines, renderHeader(name, spec, options));
-        util_1.join(lines, renderOperationGroup(group, renderOperation, spec, options));
+        (0, util_1.join)(lines, renderHeader(name, spec, options));
+        (0, util_1.join)(lines, renderOperationGroup(group, renderOperation, spec, options));
         if (options.language === 'ts') {
-            util_1.join(lines, renderOperationGroup(group, renderOperationParamType, spec, options));
+            (0, util_1.join)(lines, renderOperationGroup(group, renderOperationParamType, spec, options));
         }
-        util_1.join(lines, renderOperationGroup(group, renderOperationInfo, spec, options));
+        (0, util_1.join)(lines, renderOperationGroup(group, renderOperationInfo, spec, options));
         files.push({
             path: `${options.outDir}/${name}.${options.language}`,
             contents: lines.join('\n')
@@ -46,15 +47,15 @@ function renderOperationGroup(group, func, spec, options) {
 exports.renderOperationGroup = renderOperationGroup;
 function renderOperation(spec, op, options) {
     const lines = [];
-    util_1.join(lines, renderOperationDocs(op));
-    util_1.join(lines, renderOperationBlock(spec, op, options));
+    (0, util_1.join)(lines, renderOperationDocs(op));
+    (0, util_1.join)(lines, renderOperationBlock(spec, op, options));
     return lines;
 }
 function renderOperationDocs(op) {
     const lines = [];
     lines.push(`/**`);
-    util_1.join(lines, renderDocDescription(op));
-    util_1.join(lines, renderDocParams(op));
+    (0, util_1.join)(lines, renderDocDescription(op));
+    (0, util_1.join)(lines, renderDocParams(op));
     lines.push(` */`);
     return lines;
 }
@@ -69,10 +70,10 @@ function renderDocParams(op) {
     const required = params.filter(param => param.required);
     const optional = params.filter(param => !param.required);
     const lines = [];
-    util_1.join(lines, required.map(renderDocParam));
+    (0, util_1.join)(lines, required.map(renderDocParam));
     if (optional.length) {
         lines.push(`${support_1.DOC}@param {object} options Optional options`);
-        util_1.join(lines, optional.map(renderDocParam));
+        (0, util_1.join)(lines, optional.map(renderDocParam));
     }
     if (op.description || op.summary) {
         lines.unshift(support_1.DOC);
@@ -92,19 +93,19 @@ function renderDocParam(param) {
     if (param.enum && param.enum.length) {
         description = `Enum: ${param.enum.join(', ')}. ${description}`;
     }
-    return `${support_1.DOC}@param {${support_1.getDocType(param)}} ${name} ${description}`;
+    return `${support_1.DOC}@param {${(0, support_1.getDocType)(param)}} ${name} ${description}`;
 }
 function renderDocReturn(op) {
-    const response = util_1.getBestResponse(op);
+    const response = (0, util_1.getBestResponse)(op);
     let description = response ? response.description || '' : '';
     description = description.trim().replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
-    return `${support_1.DOC}@return {Promise<${support_1.getDocType(response)}>} ${description}`;
+    return `${support_1.DOC}@return {Promise<${(0, support_1.getDocType)(response)}>} ${description}`;
 }
 function renderOperationBlock(spec, op, options) {
     const lines = [];
-    util_1.join(lines, renderOperationSignature(op, options));
-    util_1.join(lines, renderOperationObject(spec, op, options));
-    util_1.join(lines, renderRequestCall(op, options));
+    (0, util_1.join)(lines, renderOperationSignature(op, options));
+    (0, util_1.join)(lines, renderOperationObject(spec, op, options));
+    (0, util_1.join)(lines, renderRequestCall(op, options));
     lines.push('');
     return lines;
 }
@@ -144,13 +145,13 @@ function renderOptionalParamsSignature(op, optional, options, pkg) {
 function renderReturnSignature(op, options) {
     if (options.language !== 'ts')
         return '';
-    const response = util_1.getBestResponse(op);
-    return `: Promise<api.Response<${support_1.getTSParamType(response)}>>`;
+    const response = (0, util_1.getBestResponse)(op);
+    return `: Promise<api.Response<${(0, support_1.getTSParamType)(response)}>>`;
 }
 function getParamSignature(param, options) {
     const signature = [getParamName(param.name)];
     if (options.language === 'ts')
-        signature.push(support_1.getTSParamType(param));
+        signature.push((0, support_1.getTSParamType)(param));
     return signature;
 }
 function getParamName(name) {
@@ -207,7 +208,7 @@ function renderOperationObject(spec, op, options) {
     const names = Object.keys(parameters);
     const last = names.length - 1;
     names.forEach((name, i) => {
-        util_1.join(lines, renderParamGroup(name, parameters[name], i === last));
+        (0, util_1.join)(lines, renderParamGroup(name, parameters[name], i === last));
     });
     if (lines.length) {
         if (options.language === 'ts') {
@@ -250,7 +251,7 @@ function groupParams(groups, param) {
 function renderParamGroup(name, groupLines, last) {
     const lines = [];
     lines.push(`${support_1.SP.repeat(2)}${name}: {`);
-    util_1.join(lines, groupLines.join(',\n').split('\n'));
+    (0, util_1.join)(lines, groupLines.join(',\n').split('\n'));
     lines.push(`${support_1.SP.repeat(2)}}${last ? '' : ','}`);
     return lines;
 }
@@ -270,7 +271,7 @@ function renderOperationParamType(spec, op, options) {
             lines.push(`${support_1.SP}${support_1.DOC}` + (param.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
             lines.push(`${support_1.SP} */`);
         }
-        lines.push(`${support_1.SP}${getParamName(param.name)}?: ${support_1.getTSParamType(param)}${support_1.ST}`);
+        lines.push(`${support_1.SP}${getParamName(param.name)}?: ${(0, support_1.getTSParamType)(param)}${support_1.ST}`);
     });
     lines.push('}');
     lines.push('');
@@ -294,7 +295,7 @@ function renderOperationInfo(spec, op, options) {
     if (op.security && op.security.length) {
         const secLines = renderSecurityInfo(op.security);
         lines.push(`${support_1.SP}security: [`);
-        util_1.join(lines, secLines);
+        (0, util_1.join)(lines, secLines);
         lines.push(`${support_1.SP}]`);
     }
     lines.push(`}${support_1.ST}`);

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getTSParamType = exports.getDocType = exports.formatDocDescription = exports.applyFormatOptions = exports.ST = exports.SP = exports.DEFAULT_SP = exports.DOC = void 0;
 const common_tags_1 = require("common-tags");
 const chalk_1 = require("chalk");
 exports.DOC = ' * ';
@@ -69,7 +70,7 @@ exports.getDocType = getDocType;
 const primitives = new Set(['string', 'number', 'boolean']);
 function getTSParamType(param, inTypesModule, indent = exports.SP) {
     if (!param) {
-        console.warn(chalk_1.yellow('Missing type information.'));
+        console.warn((0, chalk_1.yellow)('Missing type information.'));
         return 'any';
     }
     else if (param.enum) {
@@ -89,7 +90,7 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
     }
     else if (param.type === 'array') {
         if (!param.items) {
-            console.warn(chalk_1.yellow('Missing type information:'), param);
+            console.warn((0, chalk_1.yellow)('Missing type information:'), param);
             return 'any[]';
         }
         if (param.items.type) {
@@ -113,7 +114,7 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
                 .join(' | ')})[]`;
         }
         else {
-            console.warn(chalk_1.yellow('Missing type information:'), param);
+            console.warn((0, chalk_1.yellow)('Missing type information:'), param);
             return 'any[]';
         }
     }
@@ -124,11 +125,11 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
         }
         if (param.properties) {
             const props = Object.keys(param.properties);
-            return common_tags_1.commaLists `{
+            return (0, common_tags_1.commaLists) `{
   ${indent}${props.map(key => `${getKey(key, param)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}${exports.SP}`)}`)}
 ${indent}}`;
         }
-        console.warn(chalk_1.yellow('Missing type information:'), param);
+        console.warn((0, chalk_1.yellow)('Missing type information:'), param);
         return 'any';
     }
     else if (Array.isArray(param.oneOf)) {
@@ -144,10 +145,10 @@ ${indent}}`;
         return param.type;
     }
     else if (Array.isArray(param.type) && param.type.length === 2 && param.type[1] === 'null') {
-        return getTSParamType(Object.assign({}, param, { type: param.type[0] }), inTypesModule, indent);
+        return getTSParamType({ ...param, type: param.type[0] }, inTypesModule, indent);
     }
     else {
-        console.warn(chalk_1.yellow('Missing type information:'), param);
+        console.warn((0, chalk_1.yellow)('Missing type information:'), param);
         return 'any';
     }
 }

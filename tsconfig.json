@@ -1,15 +1,10 @@
 {
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "target": "es2017",
-    "module": "commonjs",
-    "removeComments": false
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test",
-    "sdk"
-  ]
+	"compilerOptions": {
+		"outDir": "./dist",
+		"lib": ["DOM", "ES2021"],
+		"module": "commonjs",
+		"target": "ES2021",
+		"esModuleInterop": true
+	},
+	"include": ["src/types.ts", "src/cli.ts"]
 }
