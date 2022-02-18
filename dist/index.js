@@ -23,22 +23,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.genCode = void 0;
-require("isomorphic-fetch");
+require("cross-fetch/polyfill");
 const spec_1 = require("./spec");
 const js_1 = __importDefault(require("./gen/js"));
 const util_1 = require("./gen/util");
 const assert = __importStar(require("assert"));
 function genCode(options) {
-    return verifyOptions(options)
-        .then(options => (0, spec_1.resolveSpec)(options.src, { ignoreRefType: '#/definitions/' }, options.authKey)
-        .then(spec => gen(spec, options)));
+    return verifyOptions(options).then((options) => (0, spec_1.resolveSpec)(options.src, { ignoreRefType: "#/definitions/" }, options.authKey).then((spec) => gen(spec, options)));
 }
 exports.genCode = genCode;
 function verifyOptions(options) {
     try {
-        assert.ok(options.src, 'Open API src not specified');
-        assert.ok(options.outDir, 'Output directory not specified');
-        assert.ok(options.language, 'Generation language not specified');
+        assert.ok(options.src, "Open API src not specified");
+        assert.ok(options.outDir, "Output directory not specified");
+        assert.ok(options.language, "Generation language not specified");
         return Promise.resolve(options);
     }
     catch (e) {
@@ -49,8 +47,10 @@ function gen(spec, options) {
     (0, util_1.removeOldFiles)(options);
     const operations = (0, spec_1.getOperations)(spec);
     switch (options.language) {
-        case 'js': return (0, js_1.default)(spec, operations, options);
-        case 'ts': return (0, js_1.default)(spec, operations, options);
+        case "js":
+            return (0, js_1.default)(spec, operations, options);
+        case "ts":
+            return (0, js_1.default)(spec, operations, options);
         default:
             throw new Error(`Language '${options.language}' not supported`);
     }
