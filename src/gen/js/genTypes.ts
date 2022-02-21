@@ -1,108 +1,119 @@
-import { writeFileSync, join } from '../util'
-import { DOC, SP, ST, getDocType, getTSParamType, formatDocDescription } from './support'
+import { writeFileSync, join } from '../util';
+import { DOC, SP, ST, getDocType, getTSParamType } from './support';
 
 export default function genTypes(spec: ApiSpec, options: ClientOptions) {
-  const file = genTypesFile(spec, options)
-  writeFileSync(file.path, file.contents)
+	const file = genTypesFile(spec, options);
+	writeFileSync(file.path, file.contents);
 }
 
 export function genTypesFile(spec: ApiSpec, options: ClientOptions) {
-  const lines = []
-  join(lines, renderHeader())
-  join(lines, renderDefinitions(spec, options))
-  return {
-    path: `${options.outDir}/types.${options.language}`,
-    contents: lines.join('\n')
-  }
+	const lines = [];
+	join(lines, renderHeader());
+	join(lines, renderDefinitions(spec, options));
+	return {
+		path: `${options.outDir}/types.${options.language}`,
+		contents: lines.join('\n'),
+	};
 }
 
 function renderHeader() {
-  const lines = []
-  lines.push(`/** @module types */`)
-  lines.push(`// Auto-generated, edits will be overwritten`)
-  lines.push(``)
-  return lines
+	const lines = [];
+	lines.push(`/** @module types */`);
+	lines.push(`// Auto-generated, edits will be overwritten`);
+	lines.push(``);
+	return lines;
 }
 
 function renderDefinitions(spec: ApiSpec, options: ClientOptions): string[] {
-  const isTs = (options.language === 'ts')
-  const defs = spec.definitions || {}
-  const typeLines = isTs ? [`namespace api {`] : undefined
-  const docLines = []
-  Object.keys(defs).forEach(name => {
-    const def = defs[name]
-    if (isTs) {
-      join(typeLines, renderTsType(name, def, options))
-    }
-    join(docLines, renderTypeDoc(name, def))
-  })
-  if (isTs) {
-    join(typeLines, renderTsDefaultTypes())
-    typeLines.push('}')
-  }
-  return isTs ? typeLines.concat(docLines) : docLines
+	const isTs = options.language === 'ts';
+	const defs = spec.definitions || {};
+	const typeLines = isTs ? [`namespace api {`] : undefined;
+	const docLines = [];
+	Object.keys(defs).forEach((name) => {
+		const def = defs[name];
+		if (isTs) {
+			join(typeLines, renderTsType(name, def, options));
+		}
+		join(docLines, renderTypeDoc(name, def));
+	});
+	if (isTs) {
+		join(typeLines, renderTsDefaultTypes());
+		typeLines.push('}');
+	}
+	return isTs ? typeLines.concat(docLines) : docLines;
 }
 
 function renderTsType(name, def, options) {
-  if (def.allOf) return renderTsInheritance(name, def.allOf, options)
-  if (def.type !== 'object') {
-    console.warn(`Unable to render ${name} ${def.type}, skipping.`)
-    return []
-  }
+	if (def.allOf) return renderTsInheritance(name, def.allOf, options);
+	if (def.type !== 'object') {
+		console.warn(`Unable to render ${name} ${def.type}, skipping.`);
+		return [];
+	}
 
-  const lines = []
-  if (def.description) {
-    lines.push(`/**`)
-    lines.push(DOC + def.description.trim().replace(/\n/g, `\n${DOC}${SP}`))
-    lines.push(` */`)
-  }
-  lines.push(`export interface ${name} {`)
+	const lines = [];
+	if (def.description) {
+		lines.push(`/**`);
+		lines.push(DOC + def.description.trim().replace(/\n/g, `\n${DOC}${SP}`));
+		lines.push(` */`);
+	}
+	lines.push(`export interface ${name} {`);
 
-  const required = def.required || []
-  const props = Object.keys(def.properties || {})
-  const requiredProps = props.filter(p => !!~required.indexOf(p))
-  const optionalProps = props.filter(p => !~required.indexOf(p))
+	const required = def.required || [];
+	const props = Object.keys(def.properties || {});
+	const requiredProps = props.filter((p) => !!~required.indexOf(p));
+	const optionalProps = props.filter((p) => !~required.indexOf(p));
 
-  const requiredPropLines = requiredProps
-    .map(prop => renderTsTypeProp(prop, def.properties[prop], true))
-    .reduce((a, b) => a.concat(b), [])
+	const requiredPropLines = requiredProps
+		.map((prop) => renderTsTypeProp(prop, def.properties[prop], true))
+		.reduce((a, b) => a.concat(b), []);
 
-  const optionalPropLines = optionalProps
-    .map(prop => renderTsTypeProp(prop, def.properties[prop], false))
-    .reduce((a, b) => a.concat(b), [])
+	const optionalPropLines = optionalProps
+		.map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
+		.reduce((a, b) => a.concat(b), []);
 
-  join(lines, requiredPropLines)
-  join(lines, optionalPropLines)
-  lines.push('}')
-  lines.push('')
-  return lines
+	join(lines, requiredPropLines);
+	join(lines, optionalPropLines);
+	lines.push('}');
+	lines.push('');
+	return lines;
 }
 
-function renderTsInheritance(name: string, allOf: any[], options: ClientOptions) {
-  verifyAllOf(name, allOf)
-  const ref = allOf[0]
-  const parentName = ref.$ref.split('/').pop()
-  const lines = renderTsType(name, allOf[1], options)
-  if (lines[0].startsWith('export interface')) lines.shift()
-  lines.unshift(`export interface ${name} extends ${parentName} {`)
-  return lines
+function renderTsInheritance(
+	name: string,
+	allOf: any[],
+	options: ClientOptions
+) {
+	verifyAllOf(name, allOf);
+	const ref = allOf[0];
+	const parentName = ref.$ref.split('/').pop();
+	const lines = renderTsType(name, allOf[1], options);
+	if (lines[0].startsWith('export interface')) lines.shift();
+	lines.unshift(`export interface ${name} extends ${parentName} {`);
+	return lines;
 }
 
-function renderTsTypeProp(prop: string, info: any, required: boolean): string[] {
-  const lines = []
-  const type = getTSParamType(info, true)
-  if (info.description) {
-    lines.push(`${SP}/**`)
-    lines.push(`${SP}${DOC}` + (info.description || '').trim().replace(/\n/g, `\n${SP}${DOC}${SP}`))
-    lines.push(`${SP} */`)
-  }
-  const req = required ? '' : '?'
-  lines.push(`${SP}${prop}${req}: ${type}${ST}`)
-  return lines
+function renderTsTypeProp(
+	prop: string,
+	info: any,
+	required: boolean
+): string[] {
+	const lines = [];
+	const type = getTSParamType(info, true);
+	if (info.description) {
+		lines.push(`${SP}/**`);
+		lines.push(
+			`${SP}${DOC}` +
+				(info.description || '').trim().replace(/\n/g, `\n${SP}${DOC}${SP}`)
+		);
+		lines.push(`${SP} */`);
+	}
+	const req = required ? '' : '?';
+	lines.push(`${SP}${prop}${req}: ${type}${ST}`);
+	return lines;
 }
 
 function renderTsDefaultTypes() {
-  return `export interface OpenApiSpec {
+	return `export interface OpenApiSpec {
   host: string${ST}
   basePath: string${ST}
   schemes: string[]${ST}
@@ -172,10 +183,10 @@ export interface ServiceOptions {
    */
   url?: string${ST}
   /**
-   * Fetch options object to apply to each request e.g 
-   * 
+   * Fetch options object to apply to each request e.g
+   *
    *     { mode: 'cors', credentials: true }
-   * 
+   *
    * If a headers object is defined it will be merged with any defined in
    * a specific request, the latter taking precedence with name collisions.
    */
@@ -184,16 +195,16 @@ export interface ServiceOptions {
    * Function which should resolve rights for a request (e.g auth token) given
    * the OpenAPI defined security requirements of the operation to be executed.
    */
-  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<OperationRightsInfo>${ST}
+  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<void | OperationRights>${ST}
   /**
    * Given an error response, custom format and return a ServiceError
    */
   formatServiceError?: (response: FetchResponse, data: any) => ServiceError${ST}
   /**
    * Before each Fetch request is dispatched this function will be called if it's defined.
-   * 
+   *
    * You can use this to augment each request, for example add extra query parameters.
-   * 
+   *
    *     const params = reqInfo.parameters;
    *     if (params && params.query) {
    *       params.query.lang = "en"
@@ -204,19 +215,19 @@ export interface ServiceOptions {
   /**
    * If you need some type of request retry behavior this function
    * is the place to do it.
-   * 
+   *
    * The response is promise based so simply resolve the "res" parameter
    * if you're happy with it e.g.
-   * 
+   *
    *     if (!res.error) return Promise.resolve({ res });
-   * 
+   *
    * Otherwise return a promise which flags a retry.
-   * 
+   *
    *     return Promise.resolve({ res, retry: true })
-   * 
+   *
    * You can of course do other things before this, like refresh an auth
    * token if the error indicated it expired.
-   * 
+   *
    * The "attempt" param will tell you how many times a retry has been attempted.
    */
   processResponse?: (req: api.ServiceRequest, res: Response<any>, attempt: number) => Promise<api.ResponseOutcome>${ST}
@@ -228,28 +239,35 @@ export interface ServiceOptions {
   /**
    * By default the authorization header name is "Authorization".
    * This property allows you to override it.
-   * 
+   *
    * One place this can come up is where your API is under the same host as
    * a website it powers. If the website has Basic Auth in place then some
    * browsers will override your "Authorization: Bearer <token>" header with
    * the Basic Auth value when calling your API. To counter this we can change
    * the header, e.g.
-   * 
+   *
    *     authorizationHeader = "X-Authorization"
-   * 
+   *
    * The service must of course accept this alternative.
    */
   authorizationHeader?: string${ST}
 }
 
+/** The name and the arguments needed by the security definition. */
 export type OperationRights = {[key: string]: OperationRightsInfo}${ST}
 
-export interface OperationRightsInfo {
-  username?: string${ST}
-  password?: string${ST}
-  token?: string${ST}
-  apiKey?: string${ST}
-}
+/** Security rights information based on the security definition type. */
+export type OperationRightsInfo =
+  | {
+      username?: string${ST}
+      password?: string${ST}
+    }
+  | {
+      token?: string${ST}
+    }
+  | {
+      apiKey?: string${ST}
+    }${ST}
 
 export interface Response<T> {
   raw: FetchResponse${ST}
@@ -306,55 +324,62 @@ export interface ServiceMeta {
   res: FetchResponse${ST}
   info: any${ST}
 }
-`.replace(/  /g, SP).split('\n')
+`
+		.replace(/  /g, SP)
+		.split('\n');
 }
 
-
 function renderTypeDoc(name: string, def: any): string[] {
-  if (def.allOf) return renderDocInheritance(name, def.allOf)
-  if (def.type !== 'object') {
-    console.warn(`Unable to render ${name} ${def.type}, skipping.`)
-    return []
-  }
+	if (def.allOf) return renderDocInheritance(name, def.allOf);
+	if (def.type !== 'object') {
+		console.warn(`Unable to render ${name} ${def.type}, skipping.`);
+		return [];
+	}
 
-  const group = 'types'
-  const lines = [
-    '/**',
-    `${DOC}@typedef ${name}`,
-    `${DOC}@memberof module:${group}`
-  ]
-  const req = def.required || []
-  const propLines = Object.keys(def.properties).map(prop => {
-    const info = def.properties[prop]
-    const description = (info.description || '').trim().replace(/\n/g, `\n${DOC}${SP}`)
-    return `${DOC}@property {${getDocType(info)}} ${prop} ${description}`
-  })
-  if (propLines.length) lines.push(`${DOC}`)
-  join(lines, propLines)
-  lines.push(' */')
-  lines.push('')
-  return lines
+	const group = 'types';
+	const lines = [
+		'/**',
+		`${DOC}@typedef ${name}`,
+		`${DOC}@memberof module:${group}`,
+	];
+	const req = def.required || [];
+	const propLines = Object.keys(def.properties).map((prop) => {
+		const info = def.properties[prop];
+		const description = (info.description || '')
+			.trim()
+			.replace(/\n/g, `\n${DOC}${SP}`);
+		return `${DOC}@property {${getDocType(info)}} ${prop} ${description}`;
+	});
+	if (propLines.length) lines.push(`${DOC}`);
+	join(lines, propLines);
+	lines.push(' */');
+	lines.push('');
+	return lines;
 }
 
 function renderDocInheritance(name: string, allOf: any[]) {
-  verifyAllOf(name, allOf)
-  const ref = allOf[0]
-  const parentName = ref.$ref.split('/').pop()
-  const lines = renderTypeDoc(name, allOf[1])
-  lines.splice(3, 0, `${DOC}@extends ${parentName}`)
-  return lines
+	verifyAllOf(name, allOf);
+	const ref = allOf[0];
+	const parentName = ref.$ref.split('/').pop();
+	const lines = renderTypeDoc(name, allOf[1]);
+	lines.splice(3, 0, `${DOC}@extends ${parentName}`);
+	return lines;
 }
 
-function verifyAllOf(name:string, allOf: any[]) {
-  // Currently we interpret allOf as inheritance. Not strictly correct
-  // but seems to be how most model inheritance in Swagger and is consistent
-  // with other code generation tool
-  if (!allOf || allOf.length !== 2) {
-    console.log(allOf)
-    throw new Error(`Json schema allOf '${name}' must have two elements to be treated as inheritance`)
-  }
-  const ref = allOf[0]
-  if (!ref.$ref) {
-    throw new Error(`Json schema allOf '${name}' first element must be a $ref ${ref}`)
-  }
+function verifyAllOf(name: string, allOf: any[]) {
+	// Currently we interpret allOf as inheritance. Not strictly correct
+	// but seems to be how most model inheritance in Swagger and is consistent
+	// with other code generation tool
+	if (!allOf || allOf.length !== 2) {
+		console.log(allOf);
+		throw new Error(
+			`Json schema allOf '${name}' must have two elements to be treated as inheritance`
+		);
+	}
+	const ref = allOf[0];
+	if (!ref.$ref) {
+		throw new Error(
+			`Json schema allOf '${name}' first element must be a $ref ${ref}`
+		);
+	}
 }

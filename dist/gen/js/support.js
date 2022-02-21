@@ -59,7 +59,8 @@ function getDocType(param) {
     else if (param.type === 'integer') {
         return 'number';
     }
-    else if (param.type === 'string' && (param.format === 'date-time' || param.format === 'date')) {
+    else if (param.type === 'string' &&
+        (param.format === 'date-time' || param.format === 'date')) {
         return 'date';
     }
     else {
@@ -81,9 +82,7 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
     }
     if (param.$ref) {
         const type = param.$ref.split('/').pop();
-        return inTypesModule
-            ? type
-            : `api.${type}`;
+        return inTypesModule ? type : `api.${type}`;
     }
     else if (param.schema) {
         return getTSParamType(param.schema, inTypesModule, indent);
@@ -103,14 +102,12 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
         }
         else if (param.items.$ref) {
             const type = param.items.$ref.split('/').pop();
-            return inTypesModule
-                ? `${type}[]`
-                : `api.${type}[]`;
+            return inTypesModule ? `${type}[]` : `api.${type}[]`;
         }
         else if (param.items.oneOf) {
             return `(${param.items.oneOf
-                .map(schema => getTSParamType(schema, inTypesModule, indent))
-                .map(type => `${type}`)
+                .map((schema) => getTSParamType(schema, inTypesModule, indent))
+                .map((type) => `${type}`)
                 .join(' | ')})[]`;
         }
         else {
@@ -126,14 +123,16 @@ function getTSParamType(param, inTypesModule, indent = exports.SP) {
         if (param.properties) {
             const props = Object.keys(param.properties);
             return (0, common_tags_1.commaLists) `{
-  ${indent}${props.map(key => `${getKey(key, param)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}${exports.SP}`)}`)}
+  ${indent}${props.map((key) => `${getKey(key, param)}: ${getTSParamType(param.properties[key], inTypesModule, `${indent}${exports.SP}`)}`)}
 ${indent}}`;
         }
         console.warn((0, chalk_1.yellow)('Missing type information:'), param);
         return 'any';
     }
     else if (Array.isArray(param.oneOf)) {
-        return param.oneOf.map(schema => getTSParamType(schema, inTypesModule, indent)).join(' | ');
+        return param.oneOf
+            .map((schema) => getTSParamType(schema, inTypesModule, indent))
+            .join(' | ');
     }
     else if (param.type === 'integer') {
         return 'number';
@@ -144,7 +143,9 @@ ${indent}}`;
     else if (primitives.has(param.type)) {
         return param.type;
     }
-    else if (Array.isArray(param.type) && param.type.length === 2 && param.type[1] === 'null') {
+    else if (Array.isArray(param.type) &&
+        param.type.length === 2 &&
+        param.type[1] === 'null') {
         return getTSParamType({ ...param, type: param.type[0] }, inTypesModule, indent);
     }
     else {
@@ -160,7 +161,9 @@ exports.getTSParamType = getTSParamType;
  */
 function getKey(key, schema) {
     let suffix = '?';
-    if (schema && Array.isArray(schema.required) && schema.required.includes(key)) {
+    if (schema &&
+        Array.isArray(schema.required) &&
+        schema.required.includes(key)) {
         suffix = '';
     }
     if (key.match(/^[a-z0-9_]+$/i)) {

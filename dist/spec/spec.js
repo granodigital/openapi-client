@@ -25,7 +25,7 @@ require("cross-fetch/polyfill");
 function resolveSpec(src, options, authKey) {
     if (!options)
         options = {};
-    if (typeof src === "string") {
+    if (typeof src === 'string') {
         return loadJson(src, authKey).then((spec) => formatSpec(spec, src, options));
     }
     else {
@@ -37,11 +37,11 @@ function loadJson(src, authKey) {
     if (/^https?:\/\//im.test(src)) {
         const headers = new Headers();
         if (authKey)
-            headers.append("Open-Api-Spec-Auth-Key", authKey);
+            headers.append('Open-Api-Spec-Auth-Key', authKey);
         const request = new Request(src, { headers });
         return fetch(request).then((response) => response.json());
     }
-    else if (String(process) === "[object process]") {
+    else if (String(process) === '[object process]') {
         return readFile(src).then((contents) => parseFileContents(contents, src));
     }
     else {
@@ -49,18 +49,18 @@ function loadJson(src, authKey) {
     }
 }
 function readFile(filePath) {
-    return new Promise((res, rej) => require("fs").readFile(filePath, "utf8", (err, contents) => err ? rej(err) : res(contents)));
+    return new Promise((res, rej) => require('fs').readFile(filePath, 'utf8', (err, contents) => err ? rej(err) : res(contents)));
 }
 function parseFileContents(contents, path) {
     return /.ya?ml$/i.test(path) ? YAML.load(contents) : JSON.parse(contents);
 }
 function formatSpec(spec, src, options) {
     if (!spec.basePath)
-        spec.basePath = "";
-    else if (spec.basePath.endsWith("/"))
+        spec.basePath = '';
+    else if (spec.basePath.endsWith('/'))
         spec.basePath = spec.basePath.slice(0, -1);
     if (src && /^https?:\/\//im.test(src)) {
-        const parts = src.split("/");
+        const parts = src.split('/');
         if (!spec.host)
             spec.host = parts[2];
         if (!spec.schemes || !spec.schemes.length)
@@ -68,13 +68,13 @@ function formatSpec(spec, src, options) {
     }
     else {
         if (!spec.host)
-            spec.host = "localhost";
+            spec.host = 'localhost';
         if (!spec.schemes || !spec.schemes.length)
-            spec.schemes = ["http"];
+            spec.schemes = ['http'];
     }
     const s = spec;
     if (!s.produces || !s.produces.length) {
-        s.accepts = ["application/json"]; // give sensible default
+        s.accepts = ['application/json']; // give sensible default
     }
     else {
         s.accepts = s.produces;
@@ -101,7 +101,7 @@ function expandRefs(data, lookup, options) {
     if (Array.isArray(data)) {
         return data.map((item) => expandRefs(item, lookup, options));
     }
-    else if (typeof data === "object") {
+    else if (typeof data === 'object') {
         if (dataCache.has(data))
             return data;
         if (data.$ref &&
@@ -119,8 +119,8 @@ function expandRefs(data, lookup, options) {
 }
 exports.expandRefs = expandRefs;
 function expandRef(ref, lookup) {
-    const parts = ref.split("/");
-    if (parts.shift() !== "#" || !parts[0]) {
+    const parts = ref.split('/');
+    if (parts.shift() !== '#' || !parts[0]) {
         throw new Error(`Only support JSON Schema $refs in format '#/path/to/ref'`);
     }
     let value = lookup;

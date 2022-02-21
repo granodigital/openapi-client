@@ -8,27 +8,25 @@ const SUPPORTED_METHODS = [
     'delete',
     'options',
     'head',
-    'patch'
+    'patch',
 ];
 function getOperations(spec) {
-    return getPaths(spec)
-        .reduce((ops, pathInfo) => ops.concat(getPathOperations(pathInfo, spec)), []);
+    return getPaths(spec).reduce((ops, pathInfo) => ops.concat(getPathOperations(pathInfo, spec)), []);
 }
 exports.getOperations = getOperations;
 function getPaths(spec) {
-    return Object.keys(spec.paths || {})
-        .map(path => Object.assign({ path }, spec.paths[path]));
+    return Object.keys(spec.paths || {}).map((path) => Object.assign({ path }, spec.paths[path]));
 }
 function getPathOperations(pathInfo, spec) {
     return Object.keys(pathInfo)
-        .filter(key => !!~SUPPORTED_METHODS.indexOf(key))
-        .map(method => getPathOperation(method, pathInfo, spec));
+        .filter((key) => !!~SUPPORTED_METHODS.indexOf(key))
+        .map((method) => getPathOperation(method, pathInfo, spec));
 }
 function inheritPathParams(op, spec, pathInfo) {
     let pathParams = spec.paths[pathInfo.path].parameters;
     if (pathParams) {
-        pathParams.forEach(pathParam => {
-            if (!op.parameters.some(p => p.name === pathParam.name && p.in === pathParam.in)) {
+        pathParams.forEach((pathParam) => {
+            if (!op.parameters.some((p) => p.name === pathParam.name && p.in === pathParam.in)) {
                 op.parameters.push(Object.assign({}, pathParam));
             }
         });
@@ -67,7 +65,7 @@ function getOperationGroupName(op) {
     return name.replace(/^[0-9]+/m, '');
 }
 function getOperationResponses(op) {
-    return Object.keys(op.responses || {}).map(code => {
+    return Object.keys(op.responses || {}).map((code) => {
         const info = op.responses[code];
         info.code = code;
         return info;
@@ -84,7 +82,7 @@ function getOperationSecurity(op, spec) {
     else {
         return [];
     }
-    return security.map(def => {
+    return security.map((def) => {
         const id = Object.keys(def)[0];
         const scopes = def[id].length ? def[id] : undefined;
         return { id, scopes };

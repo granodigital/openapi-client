@@ -64,9 +64,9 @@ function getBestResponse(op) {
         else
             return responseCode;
     }, NOT_FOUND);
-    return (lowestCode === NOT_FOUND)
+    return lowestCode === NOT_FOUND
         ? op.responses[0]
-        : op.responses.find(resp => resp.code == `${lowestCode}`);
+        : op.responses.find((resp) => resp.code == `${lowestCode}`);
 }
 exports.getBestResponse = getBestResponse;
 function removeOldFiles(options) {
@@ -78,10 +78,11 @@ function cleanDirs(dir, options) {
     const stats = exists(dir);
     if (!stats || !stats.isDirectory())
         return;
-    const files = FS.readdirSync(dir).map(file => PATH.resolve(`${dir}/${file}`));
+    const files = FS.readdirSync(dir).map((file) => PATH.resolve(`${dir}/${file}`));
     while (files.length) {
         const file = files.pop();
-        if (file.endsWith(options.language) && !file.endsWith(`index.${options.language}`)) {
+        if (file.endsWith(options.language) &&
+            !file.endsWith(`index.${options.language}`)) {
             FS.unlinkSync(file);
         }
         else if (exists(file).isDirectory()) {

@@ -1,9 +1,9 @@
 interface ClientOptions {
 	src: string;
 	outDir: string;
-	language: "js" | "ts";
+	language: 'js' | 'ts';
 	redux?: boolean;
-	indent?: "2" | "4" | "tab";
+	indent?: '2' | '4' | 'tab';
 	semicolon?: boolean;
 	authKey: string;
 }
@@ -28,13 +28,13 @@ interface ApiSpec {
 }
 
 type HttpMethod =
-	| "get"
-	| "put"
-	| "post"
-	| "delete"
-	| "options"
-	| "head"
-	| "patch";
+	| 'get'
+	| 'put'
+	| 'post'
+	| 'delete'
+	| 'options'
+	| 'head'
+	| 'patch';
 
 interface ApiOperation {
 	id: string;
@@ -53,27 +53,27 @@ interface ApiOperation {
 
 interface ApiOperationParam extends ApiOperationParamBase {
 	name: string;
-	in: "header" | "path" | "query" | "body" | "formData";
+	in: 'header' | 'path' | 'query' | 'body' | 'formData';
 	description: string;
 	required: boolean;
 	allowEmptyValue: boolean;
 	schema: Object;
 }
 
-type CollectionFormat = "csv" | "ssv" | "tsv" | "pipes" | "multi";
+type CollectionFormat = 'csv' | 'ssv' | 'tsv' | 'pipes' | 'multi';
 
 interface ApiOperationParamBase {
-	type: "string" | "number" | "integer" | "boolean" | "array" | "file";
+	type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'file';
 	format:
-		| "int32"
-		| "int64"
-		| "float"
-		| "double"
-		| "byte"
-		| "binary"
-		| "date"
-		| "date-time"
-		| "password";
+		| 'int32'
+		| 'int64'
+		| 'float'
+		| 'double'
+		| 'byte'
+		| 'binary'
+		| 'date'
+		| 'date-time'
+		| 'password';
 	items: ApiOperationParamBase;
 	collectionFormat: CollectionFormat;
 	default: any;

@@ -6,7 +6,7 @@ const support_1 = require("./support");
 const genOperations_1 = require("./genOperations");
 function genReduxActions(spec, operations, options) {
     const files = genReduxActionGroupFiles(spec, operations, options);
-    files.forEach(file => (0, util_1.writeFileSync)(file.path, file.contents));
+    files.forEach((file) => (0, util_1.writeFileSync)(file.path, file.contents));
 }
 exports.default = genReduxActions;
 function genReduxActionGroupFiles(spec, operations, options) {
@@ -19,7 +19,7 @@ function genReduxActionGroupFiles(spec, operations, options) {
         lines.push((0, genOperations_1.renderOperationGroup)(group, renderReduxActionBlock, spec, options));
         files.push({
             path: `${options.outDir}/action/${name}.${options.language}`,
-            contents: lines.join('\n')
+            contents: lines.join('\n'),
         });
     }
     return files;
@@ -27,7 +27,9 @@ function genReduxActionGroupFiles(spec, operations, options) {
 exports.genReduxActionGroupFiles = genReduxActionGroupFiles;
 function renderHeader(name, spec, options) {
     const code = `
-${options.language === 'ts' && spec.definitions ? '/// <reference path="../types.ts"/>' : ''}
+${options.language === 'ts' && spec.definitions
+        ? '/// <reference path="../types.ts"/>'
+        : ''}
 /** @module action/${name} */
 // Auto-generated, edits will be overwritten
 import * as ${name} from '../${name}'${support_1.ST}
@@ -42,8 +44,8 @@ function renderReduxActionBlock(spec, op, options) {
     const infoParam = isTs ? 'info?: any' : 'info';
     let paramSignature = (0, genOperations_1.renderParamSignature)(op, options, `${op.group}.`);
     paramSignature += `${paramSignature ? ', ' : ''}${infoParam}`;
-    const required = op.parameters.filter(param => param.required);
-    let params = required.map(param => (0, genOperations_1.getParamName)(param.name)).join(', ');
+    const required = op.parameters.filter((param) => param.required);
+    let params = required.map((param) => (0, genOperations_1.getParamName)(param.name)).join(', ');
     if (required.length < op.parameters.length) {
         if (required.length)
             params += ', options';

@@ -1,45 +1,45 @@
 #!/usr/bin/env node
 
-import { program } from "commander";
-import chalk from "chalk";
-import { genCode } from "./index";
+import { program } from 'commander';
+import chalk from 'chalk';
+import { genCode } from './index';
 
 const args = program
-	.version(require("../package.json").version)
+	.version(require('../package.json').version)
 	.requiredOption(
-		"-s, --src <url|path>",
-		"The url or path to the Open API spec file",
+		'-s, --src <url|path>',
+		'The url or path to the Open API spec file',
 		String,
 		process.env.OPEN_API_SRC
 	)
 	.requiredOption(
-		"-o, --outDir <dir>",
-		"The path to the directory where files should be generated",
+		'-o, --outDir <dir>',
+		'The path to the directory where files should be generated',
 		process.env.OPEN_API_OUT
 	)
 	.requiredOption(
-		"-l, --language <js|ts>",
-		"The language of code to generate",
+		'-l, --language <js|ts>',
+		'The language of code to generate',
 		process.env.OPEN_API_LANG
 	)
 	.option(
-		"-k, --authKey <key>",
-		"Auth Key passed in Open-Api-Spec-Auth-Key header",
+		'-k, --authKey <key>',
+		'Auth Key passed in Open-Api-Spec-Auth-Key header',
 		process.env.OPEN_API_AUTHKEY
 	)
 	.option(
-		"--redux",
-		"True if wanting to generate redux action creators",
+		'--redux',
+		'True if wanting to generate redux action creators',
 		process.env.OPEN_API_REDUX
 	)
 	.option(
-		"--semicolon",
-		"True if wanting to use a semicolon statement terminator",
+		'--semicolon',
+		'True if wanting to use a semicolon statement terminator',
 		process.env.OPEN_API_SEMICOLON
 	)
 	.option(
-		"--indent <2|4|tab>",
-		"Indentation to use, defaults to 2 spaces",
+		'--indent <2|4|tab>',
+		'Indentation to use, defaults to 2 spaces',
 		process.env.OPEN_API_INDENT
 	)
 	.parse(process.argv)

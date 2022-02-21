@@ -5,7 +5,7 @@ const util_1 = require("../util");
 const support_1 = require("./support");
 function genOperations(spec, operations, options) {
     const files = genOperationGroupFiles(spec, operations, options);
-    files.forEach(file => (0, util_1.writeFileSync)(file.path, file.contents));
+    files.forEach((file) => (0, util_1.writeFileSync)(file.path, file.contents));
 }
 exports.default = genOperations;
 function genOperationGroupFiles(spec, operations, options) {
@@ -22,7 +22,7 @@ function genOperationGroupFiles(spec, operations, options) {
         (0, util_1.join)(lines, renderOperationGroup(group, renderOperationInfo, spec, options));
         files.push({
             path: `${options.outDir}/${name}.${options.language}`,
-            contents: lines.join('\n')
+            contents: lines.join('\n'),
         });
     }
     return files;
@@ -41,7 +41,7 @@ function renderHeader(name, spec, options) {
 }
 function renderOperationGroup(group, func, spec, options) {
     return group
-        .map(op => func.call(this, spec, op, options))
+        .map((op) => func.call(this, spec, op, options))
         .reduce((a, b) => a.concat(b));
 }
 exports.renderOperationGroup = renderOperationGroup;
@@ -61,14 +61,16 @@ function renderOperationDocs(op) {
 }
 function renderDocDescription(op) {
     const desc = op.description || op.summary;
-    return desc ? `${support_1.DOC}${desc.trim()}`.replace(/\n/g, `\n${support_1.DOC}`).split('\n') : [];
+    return desc
+        ? `${support_1.DOC}${desc.trim()}`.replace(/\n/g, `\n${support_1.DOC}`).split('\n')
+        : [];
 }
 function renderDocParams(op) {
     const params = op.parameters;
     if (!params.length)
         return [];
-    const required = params.filter(param => param.required);
-    const optional = params.filter(param => !param.required);
+    const required = params.filter((param) => param.required);
+    const optional = params.filter((param) => !param.required);
     const lines = [];
     (0, util_1.join)(lines, required.map(renderDocParam));
     if (optional.length) {
@@ -83,7 +85,9 @@ function renderDocParams(op) {
 }
 function renderDocParam(param) {
     let name = getParamName(param.name);
-    let description = (param.description || '').trim().replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
+    let description = (param.description || '')
+        .trim()
+        .replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
     if (!param.required) {
         name = `options.${name}`;
         if (param.default)
@@ -116,13 +120,13 @@ function renderOperationSignature(op, options) {
 }
 function renderParamSignature(op, options, pkg) {
     const params = op.parameters;
-    const required = params.filter(param => param.required);
-    const optional = params.filter(param => !param.required);
+    const required = params.filter((param) => param.required);
+    const optional = params.filter((param) => !param.required);
     const funcParams = renderRequiredParamsSignature(required, options);
     const optParam = renderOptionalParamsSignature(op, optional, options, pkg);
     if (optParam.length)
         funcParams.push(optParam);
-    return funcParams.map(p => p.join(': ')).join(', ');
+    return funcParams.map((p) => p.join(': ')).join(', ');
 }
 exports.renderParamSignature = renderParamSignature;
 function renderRequiredParamsSignature(required, options) {
@@ -155,7 +159,7 @@ function getParamSignature(param, options) {
     return signature;
 }
 function getParamName(name) {
-    const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter(n => !!n);
+    const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter((n) => !!n);
     const reduced = parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`);
     return escapeReservedWords(reduced);
 }
@@ -195,7 +199,7 @@ function escapeReservedWords(name) {
         'void',
         'while',
         'with',
-        'yield'
+        'yield',
     ];
     if (reservedWords.indexOf(name) >= 0) {
         escapedName = name + '_';
@@ -218,7 +222,7 @@ function renderOperationObject(spec, op, options) {
             lines.unshift(`${support_1.SP}const parameters = {`);
         }
         lines.push(`${support_1.SP}}${support_1.ST}`);
-        const hasOptionals = op.parameters.some(op => !op.required);
+        const hasOptionals = op.parameters.some((op) => !op.required);
         if (hasOptionals)
             lines.unshift(`${support_1.SP}if (!options) options = {}${support_1.ST}`);
     }
@@ -227,7 +231,9 @@ function renderOperationObject(spec, op, options) {
 function groupParams(groups, param) {
     const group = groups[param.in] || [];
     const name = getParamName(param.name);
-    const realName = /^[_$a-z0-9]+$/gim.test(param.name) ? param.name : `'${param.name}'`;
+    const realName = /^[_$a-z0-9]+$/gim.test(param.name)
+        ? param.name
+        : `'${param.name}'`;
     const value = param.required ? name : 'options.' + name;
     if (param.type === 'array') {
         if (!param.collectionFormat)
@@ -260,15 +266,16 @@ function renderRequestCall(op, options) {
     return [`${support_1.SP}return gateway.request(${op.id}Operation${params})${support_1.ST}`, '}'];
 }
 function renderOperationParamType(spec, op, options) {
-    const optional = op.parameters.filter(param => !param.required);
+    const optional = op.parameters.filter((param) => !param.required);
     if (!optional.length)
         return [];
     const lines = [];
     lines.push(`export interface ${op.id[0].toUpperCase() + op.id.slice(1)}Options {`);
-    optional.forEach(param => {
+    optional.forEach((param) => {
         if (param.description) {
             lines.push(`${support_1.SP}/**`);
-            lines.push(`${support_1.SP}${support_1.DOC}` + (param.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
+            lines.push(`${support_1.SP}${support_1.DOC}` +
+                (param.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
             lines.push(`${support_1.SP} */`);
         }
         lines.push(`${support_1.SP}${getParamName(param.name)}?: ${(0, support_1.getTSParamType)(param)}${support_1.ST}`);
@@ -287,7 +294,7 @@ function renderOperationInfo(spec, op, options) {
         lines.push(`const ${op.id}Operation = {`);
     }
     lines.push(`${support_1.SP}path: '${op.path}',`);
-    const hasBody = op.parameters.some(p => p.in === 'body');
+    const hasBody = op.parameters.some((p) => p.in === 'body');
     if (hasBody && op.contentTypes.length) {
         lines.push(`${support_1.SP}contentTypes: ['${op.contentTypes.join("','")}'],`);
     }
@@ -303,7 +310,8 @@ function renderOperationInfo(spec, op, options) {
     return lines;
 }
 function renderSecurityInfo(security) {
-    return security.map((sec, i) => {
+    return security
+        .map((sec, i) => {
         const scopes = sec.scopes;
         const secLines = [];
         secLines.push(`${support_1.SP.repeat(2)}{`);
@@ -313,5 +321,6 @@ function renderSecurityInfo(security) {
         }
         secLines.push(`${support_1.SP.repeat(2)}}${i + 1 < security.length ? ',' : ''}`);
         return secLines;
-    }).reduce((a, b) => a.concat(b));
+    })
+        .reduce((a, b) => a.concat(b));
 }

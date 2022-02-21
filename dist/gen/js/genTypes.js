@@ -14,7 +14,7 @@ function genTypesFile(spec, options) {
     (0, util_1.join)(lines, renderDefinitions(spec, options));
     return {
         path: `${options.outDir}/types.${options.language}`,
-        contents: lines.join('\n')
+        contents: lines.join('\n'),
     };
 }
 exports.genTypesFile = genTypesFile;
@@ -26,11 +26,11 @@ function renderHeader() {
     return lines;
 }
 function renderDefinitions(spec, options) {
-    const isTs = (options.language === 'ts');
+    const isTs = options.language === 'ts';
     const defs = spec.definitions || {};
     const typeLines = isTs ? [`namespace api {`] : undefined;
     const docLines = [];
-    Object.keys(defs).forEach(name => {
+    Object.keys(defs).forEach((name) => {
         const def = defs[name];
         if (isTs) {
             (0, util_1.join)(typeLines, renderTsType(name, def, options));
@@ -59,13 +59,13 @@ function renderTsType(name, def, options) {
     lines.push(`export interface ${name} {`);
     const required = def.required || [];
     const props = Object.keys(def.properties || {});
-    const requiredProps = props.filter(p => !!~required.indexOf(p));
-    const optionalProps = props.filter(p => !~required.indexOf(p));
+    const requiredProps = props.filter((p) => !!~required.indexOf(p));
+    const optionalProps = props.filter((p) => !~required.indexOf(p));
     const requiredPropLines = requiredProps
-        .map(prop => renderTsTypeProp(prop, def.properties[prop], true))
+        .map((prop) => renderTsTypeProp(prop, def.properties[prop], true))
         .reduce((a, b) => a.concat(b), []);
     const optionalPropLines = optionalProps
-        .map(prop => renderTsTypeProp(prop, def.properties[prop], false))
+        .map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
         .reduce((a, b) => a.concat(b), []);
     (0, util_1.join)(lines, requiredPropLines);
     (0, util_1.join)(lines, optionalPropLines);
@@ -88,7 +88,8 @@ function renderTsTypeProp(prop, info, required) {
     const type = (0, support_1.getTSParamType)(info, true);
     if (info.description) {
         lines.push(`${support_1.SP}/**`);
-        lines.push(`${support_1.SP}${support_1.DOC}` + (info.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
+        lines.push(`${support_1.SP}${support_1.DOC}` +
+            (info.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
         lines.push(`${support_1.SP} */`);
     }
     const req = required ? '' : '?';
@@ -166,10 +167,10 @@ export interface ServiceOptions {
    */
   url?: string${support_1.ST}
   /**
-   * Fetch options object to apply to each request e.g 
-   * 
+   * Fetch options object to apply to each request e.g
+   *
    *     { mode: 'cors', credentials: true }
-   * 
+   *
    * If a headers object is defined it will be merged with any defined in
    * a specific request, the latter taking precedence with name collisions.
    */
@@ -178,16 +179,16 @@ export interface ServiceOptions {
    * Function which should resolve rights for a request (e.g auth token) given
    * the OpenAPI defined security requirements of the operation to be executed.
    */
-  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<OperationRightsInfo>${support_1.ST}
+  getAuthorization?: (security: OperationSecurity, securityDefinitions: any, op: OperationInfo) => Promise<void | OperationRights>${support_1.ST}
   /**
    * Given an error response, custom format and return a ServiceError
    */
   formatServiceError?: (response: FetchResponse, data: any) => ServiceError${support_1.ST}
   /**
    * Before each Fetch request is dispatched this function will be called if it's defined.
-   * 
+   *
    * You can use this to augment each request, for example add extra query parameters.
-   * 
+   *
    *     const params = reqInfo.parameters;
    *     if (params && params.query) {
    *       params.query.lang = "en"
@@ -198,19 +199,19 @@ export interface ServiceOptions {
   /**
    * If you need some type of request retry behavior this function
    * is the place to do it.
-   * 
+   *
    * The response is promise based so simply resolve the "res" parameter
    * if you're happy with it e.g.
-   * 
+   *
    *     if (!res.error) return Promise.resolve({ res });
-   * 
+   *
    * Otherwise return a promise which flags a retry.
-   * 
+   *
    *     return Promise.resolve({ res, retry: true })
-   * 
+   *
    * You can of course do other things before this, like refresh an auth
    * token if the error indicated it expired.
-   * 
+   *
    * The "attempt" param will tell you how many times a retry has been attempted.
    */
   processResponse?: (req: api.ServiceRequest, res: Response<any>, attempt: number) => Promise<api.ResponseOutcome>${support_1.ST}
@@ -222,28 +223,35 @@ export interface ServiceOptions {
   /**
    * By default the authorization header name is "Authorization".
    * This property allows you to override it.
-   * 
+   *
    * One place this can come up is where your API is under the same host as
    * a website it powers. If the website has Basic Auth in place then some
    * browsers will override your "Authorization: Bearer <token>" header with
    * the Basic Auth value when calling your API. To counter this we can change
    * the header, e.g.
-   * 
+   *
    *     authorizationHeader = "X-Authorization"
-   * 
+   *
    * The service must of course accept this alternative.
    */
   authorizationHeader?: string${support_1.ST}
 }
 
+/** The name and the arguments needed by the security definition. */
 export type OperationRights = {[key: string]: OperationRightsInfo}${support_1.ST}
 
-export interface OperationRightsInfo {
-  username?: string${support_1.ST}
-  password?: string${support_1.ST}
-  token?: string${support_1.ST}
-  apiKey?: string${support_1.ST}
-}
+/** Security rights information based on the security definition type. */
+export type OperationRightsInfo =
+  | {
+      username?: string${support_1.ST}
+      password?: string${support_1.ST}
+    }
+  | {
+      token?: string${support_1.ST}
+    }
+  | {
+      apiKey?: string${support_1.ST}
+    }${support_1.ST}
 
 export interface Response<T> {
   raw: FetchResponse${support_1.ST}
@@ -300,7 +308,9 @@ export interface ServiceMeta {
   res: FetchResponse${support_1.ST}
   info: any${support_1.ST}
 }
-`.replace(/  /g, support_1.SP).split('\n');
+`
+        .replace(/  /g, support_1.SP)
+        .split('\n');
 }
 function renderTypeDoc(name, def) {
     if (def.allOf)
@@ -313,12 +323,14 @@ function renderTypeDoc(name, def) {
     const lines = [
         '/**',
         `${support_1.DOC}@typedef ${name}`,
-        `${support_1.DOC}@memberof module:${group}`
+        `${support_1.DOC}@memberof module:${group}`,
     ];
     const req = def.required || [];
-    const propLines = Object.keys(def.properties).map(prop => {
+    const propLines = Object.keys(def.properties).map((prop) => {
         const info = def.properties[prop];
-        const description = (info.description || '').trim().replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
+        const description = (info.description || '')
+            .trim()
+            .replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
         return `${support_1.DOC}@property {${(0, support_1.getDocType)(info)}} ${prop} ${description}`;
     });
     if (propLines.length)
