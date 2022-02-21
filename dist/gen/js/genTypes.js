@@ -241,17 +241,12 @@ export interface ServiceOptions {
 export type OperationRights = {[key: string]: OperationRightsInfo}${support_1.ST}
 
 /** Security rights information based on the security definition type. */
-export type OperationRightsInfo =
-  | {
-      username?: string${support_1.ST}
-      password?: string${support_1.ST}
-    }
-  | {
-      token?: string${support_1.ST}
-    }
-  | {
-      apiKey?: string${support_1.ST}
-    }${support_1.ST}
+export type OperationRightsInfo = {
+  username?: string${support_1.ST}
+  password?: string${support_1.ST}
+  token?: string${support_1.ST}
+  apiKey?: string${support_1.ST}
+}${support_1.ST}
 
 export interface Response<T> {
   raw: FetchResponse${support_1.ST}
