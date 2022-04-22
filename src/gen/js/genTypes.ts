@@ -319,6 +319,8 @@ export interface ServiceMeta {
   res: FetchResponse${ST}
   info: any${ST}
 }
+
+export type AsyncAction = (dispatch: (action: any) => void) => Promise<void>${ST}
 `
 		.replace(/  /g, SP)
 		.split('\n');

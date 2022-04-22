@@ -59,7 +59,7 @@ export const ${actionStart} = 's/${op.group}/${actionStart}'${support_1.ST}
 export const ${actionComplete} = 's/${op.group}/${actionComplete}'${support_1.ST}
 ${isTs ? `export type ${actionComplete} = ${returnType}${support_1.ST}` : ''}
 
-export function ${op.id}(${paramSignature})${isTs ? ': any' : ''} {
+export function ${op.id}(${paramSignature})${isTs ? ': api.AsyncAction' : ''} {
   return dispatch => {
     dispatch({ type: ${actionStart}, meta: { info, params: { ${params} } } })${support_1.ST}
     return ${op.group}.${op.id}(${params})
