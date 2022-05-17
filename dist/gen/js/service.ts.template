@@ -1,7 +1,6 @@
 /// <reference path="../types.ts"/>
 // Auto-generated, edits will be overwritten
 import spec from './spec';
-import { isEmpty } from 'lodash';
 
 export class ServiceError extends Error implements api.ServiceError {
 	status: number;
@@ -247,7 +246,7 @@ function applyAuthorization(req: any, rights: any, spec: api.OpenApiSpec) {
 			case 'apiKey':
 				if (definition.in === 'header') {
 					// Empty headers break Edge
-					if (!isEmpty(rightsInfo.apiKey))
+					if (!!rightsInfo.apiKey)
 						req.header[resolveAuthHeaderName(definition.name)] =
 							rightsInfo.apiKey;
 				} else if (definition.in === 'query') {
