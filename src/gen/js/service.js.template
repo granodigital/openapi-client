@@ -199,10 +199,7 @@ function applyAuthorization(req, rights, spec) {
 		switch (definition.type) {
 			case 'basic':
 				const credentials = `${rightsInfo.username}:${rightsInfo.password}`;
-				const token =
-					typeof window !== 'undefined' && window.btoa
-						? window.btoa(credentials)
-						: Buffer.from(credentials).toString('base64');
+				const token = window.btoa(credentials);
 				req.header[resolveAuthHeaderName('Authorization')] = `Basic ${token}`;
 				break;
 			case 'oauth2':

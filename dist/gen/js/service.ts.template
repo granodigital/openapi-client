@@ -231,11 +231,8 @@ function applyAuthorization(req: any, rights: any, spec: api.OpenApiSpec) {
 		const definition = spec.securityDefinitions[name];
 		switch (definition.type) {
 			case 'basic':
-				const creds = `${rightsInfo.username}:${rightsInfo.password}`;
-				const token =
-					typeof window !== 'undefined' && window.btoa
-						? window.btoa(creds)
-						: new Buffer(creds).toString('base64');
+				const credentials = `${rightsInfo.username}:${rightsInfo.password}`;
+				const token = window.btoa(credentials);
 				req.header[resolveAuthHeaderName('Authorization')] = `Basic ${token}`;
 				break;
 			case 'oauth2':
