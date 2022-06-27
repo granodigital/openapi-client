@@ -149,6 +149,10 @@ ${indent}}`;
         return getTSParamType({ ...param, type: param.type[0] }, inTypesModule, indent);
     }
     else {
+        // No body returned.
+        if (param.code === '204') {
+            return 'undefined';
+        }
         console.warn((0, chalk_1.yellow)('Missing type information:'), param);
         return 'any';
     }

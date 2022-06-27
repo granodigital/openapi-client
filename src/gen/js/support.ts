@@ -149,6 +149,10 @@ ${indent}}`;
 			indent
 		);
 	} else {
+		// No body returned.
+		if (param.code === '204') {
+			return 'undefined';
+		}
 		console.warn(yellow('Missing type information:'), param);
 		return 'any';
 	}
