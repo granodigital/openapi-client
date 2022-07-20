@@ -28,7 +28,7 @@ exports.genReduxActionGroupFiles = genReduxActionGroupFiles;
 function renderHeader(name, spec, options) {
     const code = `
 ${options.language === 'ts' && spec.definitions
-        ? '/// <reference path="../types.ts"/>'
+        ? '// @ts-nocheck\n/// <reference path="../types.ts"/>'
         : ''}
 /** @module action/${name} */
 // Auto-generated, edits will be overwritten

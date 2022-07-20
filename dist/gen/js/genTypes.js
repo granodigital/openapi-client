@@ -20,6 +20,7 @@ function genTypesFile(spec, options) {
 exports.genTypesFile = genTypesFile;
 function renderHeader() {
     const lines = [];
+    lines.push(`// @ts-nocheck`);
     lines.push(`/** @module types */`);
     lines.push(`// Auto-generated, edits will be overwritten`);
     lines.push(``);
