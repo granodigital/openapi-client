@@ -12,8 +12,9 @@ function genTypesFile(spec, options) {
     const lines = [];
     (0, util_1.join)(lines, renderHeader());
     (0, util_1.join)(lines, renderDefinitions(spec, options));
+    const ext = options.language === 'js' ? 'js' : 'd.ts';
     return {
-        path: `${options.outDir}/types.${options.language}`,
+        path: `${options.outDir}/types.${ext}`,
         contents: lines.join('\n'),
     };
 }
