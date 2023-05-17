@@ -32,7 +32,7 @@ function renderHeader(name, spec, options) {
     const lines = [];
     if (spec.definitions && options.language === 'ts') {
         lines.push(`// @ts-nocheck`);
-        lines.push(`/// <reference path="types.ts"/>`);
+        lines.push(`/// <reference path="types.d.ts"/>`);
     }
     lines.push(`/** @module ${name} */`);
     lines.push(`// Auto-generated, edits will be overwritten`);

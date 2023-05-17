@@ -26,7 +26,7 @@ function renderSpecView(spec, options) {
     };
     const type = options.language === 'ts' ? ': api.OpenApiSpec' : '';
     return `${options.language === 'ts'
-        ? '// @ts-nocheck\n/// <reference path="../types.ts"/>'
+        ? '// @ts-nocheck\n/// <reference path="../types.d.ts"/>'
         : ''}
 // Auto-generated, edits will be overwritten
 const spec${type} = ${stringify(view)}${support_1.ST}

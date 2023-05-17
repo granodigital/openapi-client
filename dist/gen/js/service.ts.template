@@ -1,5 +1,5 @@
 // @ts-nocheck
-/// <reference path="../types.ts"/>
+/// <reference path="../types.d.ts"/>
 // Auto-generated, edits will be overwritten
 import spec from './spec';
 

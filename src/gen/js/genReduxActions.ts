@@ -51,7 +51,7 @@ function renderHeader(
 	const code = `
 ${
 	options.language === 'ts' && spec.definitions
-		? '// @ts-nocheck\n/// <reference path="../types.ts"/>'
+		? '// @ts-nocheck\n/// <reference path="../types.d.ts"/>'
 		: ''
 }
 /** @module action/${name} */
