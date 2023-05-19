@@ -54,7 +54,7 @@ function getDocType(param, details) {
             return `module:types.${type}[]`;
         }
         else {
-            console.warn((0, chalk_1.yellow)(`Missing type information for ${details.prop}:`), param);
+            console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
             return 'object[]';
         }
     }
@@ -91,7 +91,7 @@ function getTSParamType(param, details, inTypesModule, indent = exports.SP) {
     }
     else if (param.type === 'array') {
         if (!param.items) {
-            console.warn((0, chalk_1.yellow)('Missing type information for ${}:'), param, details);
+            console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
             return 'any[]';
         }
         if (param.items.type) {
@@ -113,7 +113,7 @@ function getTSParamType(param, details, inTypesModule, indent = exports.SP) {
                 .join(' | ')})[]`;
         }
         else {
-            console.warn((0, chalk_1.yellow)('Missing type information for ${}:'), param, details);
+            console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
             return 'any[]';
         }
     }
