@@ -35,7 +35,6 @@ function formatDocDescription(description) {
 exports.formatDocDescription = formatDocDescription;
 function getDocType(param, details) {
     if (!param) {
-        console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
         return 'object';
     }
     else if (param.$ref) {
@@ -54,7 +53,6 @@ function getDocType(param, details) {
             return `module:types.${type}[]`;
         }
         else {
-            console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
             return 'object[]';
         }
     }

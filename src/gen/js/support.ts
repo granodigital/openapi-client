@@ -37,10 +37,6 @@ export function getDocType(
 	details: { prop: string; description?: string }
 ): string {
 	if (!param) {
-		console.warn(
-			yellow(`Missing type information for "${details.prop}":`),
-			param
-		);
 		return 'object';
 	} else if (param.$ref) {
 		const type = param.$ref.split('/').pop();
@@ -54,10 +50,6 @@ export function getDocType(
 			const type = param.items.$ref.split('/').pop();
 			return `module:types.${type}[]`;
 		} else {
-			console.warn(
-				yellow(`Missing type information for "${details.prop}":`),
-				param
-			);
 			return 'object[]';
 		}
 	} else if (param.type === 'integer') {
