@@ -37,7 +37,6 @@ import * as ${name} from '../${name}'${support_1.ST}
     return code;
 }
 function renderReduxActionBlock(spec, op, options) {
-    const lines = [];
     const isTs = options.language === 'ts';
     const actionStart = (0, util_1.camelToUppercase)(op.id) + '_START';
     const actionComplete = (0, util_1.camelToUppercase)(op.id);
@@ -53,7 +52,9 @@ function renderReduxActionBlock(spec, op, options) {
             params = 'options';
     }
     const response = (0, util_1.getBestResponse)(op);
-    const returnType = response ? (0, support_1.getTSParamType)(response) : 'any';
+    const returnType = response
+        ? (0, support_1.getTSParamType)(response, { prop: response.code })
+        : 'any';
     return `
 export const ${actionStart} = 's/${op.group}/${actionStart}'${support_1.ST}
 export const ${actionComplete} = 's/${op.group}/${actionComplete}'${support_1.ST}

@@ -98,13 +98,19 @@ function renderDocParam(param) {
     if (param.enum && param.enum.length) {
         description = `Enum: ${param.enum.join(', ')}. ${description}`;
     }
-    return `${support_1.DOC}@param {${(0, support_1.getDocType)(param)}} ${name} ${description}`;
+    return `${support_1.DOC}@param {${(0, support_1.getDocType)(param, {
+        prop: name,
+        description,
+    })}} ${name} ${description}`;
 }
 function renderDocReturn(op) {
     const response = (0, util_1.getBestResponse)(op);
     let description = response ? response.description || '' : '';
     description = description.trim().replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
-    return `${support_1.DOC}@return {Promise<${(0, support_1.getDocType)(response)}>} ${description}`;
+    return `${support_1.DOC}@return {Promise<${(0, support_1.getDocType)(response, {
+        prop: 'return',
+        description,
+    })}>} ${description}`;
 }
 function renderOperationBlock(spec, op, options) {
     const lines = [];
@@ -151,12 +157,14 @@ function renderReturnSignature(op, options) {
     if (options.language !== 'ts')
         return '';
     const response = (0, util_1.getBestResponse)(op);
-    return `: Promise<api.Response<${(0, support_1.getTSParamType)(response)}>>`;
+    return `: Promise<api.Response<${(0, support_1.getTSParamType)(response, {
+        prop: response.code,
+    })}>>`;
 }
 function getParamSignature(param, options) {
     const signature = [getParamName(param.name)];
     if (options.language === 'ts')
-        signature.push((0, support_1.getTSParamType)(param));
+        signature.push((0, support_1.getTSParamType)(param, { prop: param.name }));
     return signature;
 }
 function getParamName(name) {
@@ -279,7 +287,9 @@ function renderOperationParamType(spec, op, options) {
                 (param.description || '').trim().replace(/\n/g, `\n${support_1.SP}${support_1.DOC}${support_1.SP}`));
             lines.push(`${support_1.SP} */`);
         }
-        lines.push(`${support_1.SP}${getParamName(param.name)}?: ${(0, support_1.getTSParamType)(param)}${support_1.ST}`);
+        lines.push(`${support_1.SP}${getParamName(param.name)}?: ${(0, support_1.getTSParamType)(param, {
+            prop: param.name,
+        })}${support_1.ST}`);
     });
     lines.push('}');
     lines.push('');

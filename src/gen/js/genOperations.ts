@@ -135,14 +135,20 @@ function renderDocParam(param) {
 	if (param.enum && param.enum.length) {
 		description = `Enum: ${param.enum.join(', ')}. ${description}`;
 	}
-	return `${DOC}@param {${getDocType(param)}} ${name} ${description}`;
+	return `${DOC}@param {${getDocType(param, {
+		prop: name,
+		description,
+	})}} ${name} ${description}`;
 }
 
 function renderDocReturn(op: ApiOperation): string {
 	const response = getBestResponse(op);
 	let description = response ? response.description || '' : '';
 	description = description.trim().replace(/\n/g, `\n${DOC}${SP}`);
-	return `${DOC}@return {Promise<${getDocType(response)}>} ${description}`;
+	return `${DOC}@return {Promise<${getDocType(response, {
+		prop: 'return',
+		description,
+	})}>} ${description}`;
 }
 
 function renderOperationBlock(
@@ -213,7 +219,9 @@ function renderReturnSignature(
 ): string {
 	if (options.language !== 'ts') return '';
 	const response = getBestResponse(op);
-	return `: Promise<api.Response<${getTSParamType(response)}>>`;
+	return `: Promise<api.Response<${getTSParamType(response, {
+		prop: response.code,
+	})}>>`;
 }
 
 function getParamSignature(
@@ -221,7 +229,8 @@ function getParamSignature(
 	options: ClientOptions
 ): string[] {
 	const signature = [getParamName(param.name)];
-	if (options.language === 'ts') signature.push(getTSParamType(param));
+	if (options.language === 'ts')
+		signature.push(getTSParamType(param, { prop: param.name }));
 	return signature;
 }
 
@@ -369,7 +378,9 @@ function renderOperationParamType(
 			lines.push(`${SP} */`);
 		}
 		lines.push(
-			`${SP}${getParamName(param.name)}?: ${getTSParamType(param)}${ST}`
+			`${SP}${getParamName(param.name)}?: ${getTSParamType(param, {
+				prop: param.name,
+			})}${ST}`
 		);
 	});
 	lines.push('}');

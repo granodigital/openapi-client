@@ -1,8 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.genTypesFile = void 0;
 const util_1 = require("../util");
 const support_1 = require("./support");
+const debug_1 = __importDefault(require("debug"));
+const debug = (0, debug_1.default)('openapi:gen:types');
 function genTypes(spec, options) {
     const file = genTypesFile(spec, options);
     (0, util_1.writeFileSync)(file.path, file.contents);
@@ -33,6 +38,7 @@ function renderDefinitions(spec, options) {
     const typeLines = isTs ? [`namespace api {`] : undefined;
     const docLines = [];
     Object.keys(defs).forEach((name) => {
+        debug('rendering type', name);
         const def = defs[name];
         if (isTs) {
             (0, util_1.join)(typeLines, renderTsType(name, def, options));
@@ -87,7 +93,7 @@ function renderTsInheritance(name, allOf, options) {
 }
 function renderTsTypeProp(prop, info, required) {
     const lines = [];
-    const type = (0, support_1.getTSParamType)(info, true);
+    const type = (0, support_1.getTSParamType)(info, { prop }, true);
     if (info.description) {
         lines.push(`${support_1.SP}/**`);
         lines.push(`${support_1.SP}${support_1.DOC}` +
@@ -330,7 +336,10 @@ function renderTypeDoc(name, def) {
         const description = (info.description || '')
             .trim()
             .replace(/\n/g, `\n${support_1.DOC}${support_1.SP}`);
-        return `${support_1.DOC}@property {${(0, support_1.getDocType)(info)}} ${prop} ${description}`;
+        return `${support_1.DOC}@property {${(0, support_1.getDocType)(info, {
+            prop,
+            description,
+        })}} ${prop} ${description}`;
     });
     if (propLines.length)
         lines.push(`${support_1.DOC}`);

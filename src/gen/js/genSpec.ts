@@ -1,4 +1,4 @@
-import { DOC, SP, ST, getDocType, getTSParamType } from './support';
+import { SP, ST } from './support';
 import { writeFileSync } from '../util';
 
 export default function genSpec(spec: ApiSpec, options: ClientOptions) {

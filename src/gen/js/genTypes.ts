@@ -1,5 +1,8 @@
 import { writeFileSync, join } from '../util';
 import { DOC, SP, ST, getDocType, getTSParamType } from './support';
+import Debug from 'debug';
+
+const debug = Debug('openapi:gen:types');
 
 export default function genTypes(spec: ApiSpec, options: ClientOptions) {
 	const file = genTypesFile(spec, options);
@@ -32,6 +35,7 @@ function renderDefinitions(spec: ApiSpec, options: ClientOptions): string[] {
 	const typeLines = isTs ? [`namespace api {`] : undefined;
 	const docLines = [];
 	Object.keys(defs).forEach((name) => {
+		debug('rendering type', name);
 		const def = defs[name];
 		if (isTs) {
 			join(typeLines, renderTsType(name, def, options));
@@ -100,7 +104,7 @@ function renderTsTypeProp(
 	required: boolean
 ): string[] {
 	const lines = [];
-	const type = getTSParamType(info, true);
+	const type = getTSParamType(info, { prop }, true);
 	if (info.description) {
 		lines.push(`${SP}/**`);
 		lines.push(
@@ -347,7 +351,10 @@ function renderTypeDoc(name: string, def: any): string[] {
 		const description = (info.description || '')
 			.trim()
 			.replace(/\n/g, `\n${DOC}${SP}`);
-		return `${DOC}@property {${getDocType(info)}} ${prop} ${description}`;
+		return `${DOC}@property {${getDocType(info, {
+			prop,
+			description,
+		})}} ${prop} ${description}`;
 	});
 	if (propLines.length) lines.push(`${DOC}`);
 	join(lines, propLines);

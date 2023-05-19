@@ -1,11 +1,10 @@
 import {
 	writeFileSync,
-	join,
 	groupOperationsByGroupName,
 	camelToUppercase,
 	getBestResponse,
 } from '../util';
-import { DOC, SP, ST, getDocType, getTSParamType } from './support';
+import { SP, ST, getTSParamType } from './support';
 import {
 	renderParamSignature,
 	renderOperationGroup,
@@ -66,7 +65,6 @@ function renderReduxActionBlock(
 	op: ApiOperation,
 	options: ClientOptions
 ): string {
-	const lines = [];
 	const isTs = options.language === 'ts';
 	const actionStart = camelToUppercase(op.id) + '_START';
 	const actionComplete = camelToUppercase(op.id);
@@ -81,7 +79,9 @@ function renderReduxActionBlock(
 	}
 
 	const response = getBestResponse(op);
-	const returnType = response ? getTSParamType(response) : 'any';
+	const returnType = response
+		? getTSParamType(response, { prop: response.code })
+		: 'any';
 	return `
 export const ${actionStart} = 's/${op.group}/${actionStart}'${ST}
 export const ${actionComplete} = 's/${op.group}/${actionComplete}'${ST}

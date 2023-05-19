@@ -32,21 +32,32 @@ export function formatDocDescription(description: string): string {
 	return (description || '').trim().replace(/\n/g, `\n${DOC}${SP}`);
 }
 
-export function getDocType(param: any): string {
+export function getDocType(
+	param: any,
+	details: { prop: string; description?: string }
+): string {
 	if (!param) {
+		console.warn(
+			yellow(`Missing type information for "${details.prop}":`),
+			param
+		);
 		return 'object';
 	} else if (param.$ref) {
 		const type = param.$ref.split('/').pop();
 		return `module:types.${type}`;
 	} else if (param.schema) {
-		return getDocType(param.schema);
+		return getDocType(param.schema, details);
 	} else if (param.type === 'array') {
-		if (param.items.type) {
-			return `${getDocType(param.items)}[]`;
-		} else if (param.items.$ref) {
+		if (param.items?.type) {
+			return `${getDocType(param.items, details)}[]`;
+		} else if (param.items?.$ref) {
 			const type = param.items.$ref.split('/').pop();
 			return `module:types.${type}[]`;
 		} else {
+			console.warn(
+				yellow(`Missing type information for ${details.prop}:`),
+				param
+			);
 			return 'object[]';
 		}
 	} else if (param.type === 'integer') {
@@ -65,11 +76,12 @@ const primitives = new Set(['string', 'number', 'boolean']);
 
 export function getTSParamType(
 	param: any,
+	details: { prop: string },
 	inTypesModule?: boolean,
 	indent = SP
 ): string {
 	if (!param) {
-		console.warn(yellow('Missing type information.'));
+		console.warn(yellow('Missing type information.'), details);
 		return 'any';
 	} else if (param.enum) {
 		if (!param.type || param.type === 'string')
@@ -80,28 +92,38 @@ export function getTSParamType(
 		const type = param.$ref.split('/').pop();
 		return inTypesModule ? type : `api.${type}`;
 	} else if (param.schema) {
-		return getTSParamType(param.schema, inTypesModule, indent);
+		return getTSParamType(param.schema, details, inTypesModule, indent);
 	} else if (param.type === 'array') {
 		if (!param.items) {
-			console.warn(yellow('Missing type information:'), param);
+			console.warn(yellow('Missing type information for ${}:'), param, details);
 			return 'any[]';
 		}
 		if (param.items.type) {
 			if (param.items.enum) {
-				return `(${getTSParamType(param.items, inTypesModule, indent)})[]`;
+				return `(${getTSParamType(
+					param.items,
+					details,
+					inTypesModule,
+					indent
+				)})[]`;
 			} else {
-				return `${getTSParamType(param.items, inTypesModule, indent)}[]`;
+				return `${getTSParamType(
+					param.items,
+					details,
+					inTypesModule,
+					indent
+				)}[]`;
 			}
 		} else if (param.items.$ref) {
 			const type = param.items.$ref.split('/').pop();
 			return inTypesModule ? `${type}[]` : `api.${type}[]`;
 		} else if (param.items.oneOf) {
 			return `(${param.items.oneOf
-				.map((schema) => getTSParamType(schema, inTypesModule, indent))
+				.map((schema) => getTSParamType(schema, details, inTypesModule, indent))
 				.map((type) => `${type}`)
 				.join(' | ')})[]`;
 		} else {
-			console.warn(yellow('Missing type information:'), param);
+			console.warn(yellow('Missing type information for ${}:'), param, details);
 			return 'any[]';
 		}
 	} else if (param.type === 'object') {
@@ -109,6 +131,7 @@ export function getTSParamType(
 			const extraProps = param.additionalProperties;
 			return `{[key: string]: ${getTSParamType(
 				extraProps,
+				details,
 				inTypesModule,
 				indent
 			)}}`;
@@ -120,17 +143,21 @@ export function getTSParamType(
 				(key) =>
 					`${getKey(key, param)}: ${getTSParamType(
 						param.properties[key],
+						details,
 						inTypesModule,
 						`${indent}${SP}`
 					)}`
 			)}
 ${indent}}`;
 		}
-		console.warn(yellow('Missing type information:'), param);
+		console.warn(
+			yellow(`Missing type information for "${details.prop}":`),
+			param
+		);
 		return 'any';
 	} else if (Array.isArray(param.oneOf)) {
 		return param.oneOf
-			.map((schema) => getTSParamType(schema, inTypesModule, indent))
+			.map((schema) => getTSParamType(schema, details, inTypesModule, indent))
 			.join(' | ');
 	} else if (param.type === 'integer') {
 		return 'number';
@@ -145,6 +172,7 @@ ${indent}}`;
 	) {
 		return getTSParamType(
 			{ ...param, type: param.type[0] },
+			details,
 			inTypesModule,
 			indent
 		);
@@ -153,7 +181,10 @@ ${indent}}`;
 		if (param.code === '204' || param.code?.startsWith('3')) {
 			return 'undefined';
 		}
-		console.warn(yellow('Missing type information:'), param);
+		console.warn(
+			yellow(`Missing type information for "${details.prop}":`),
+			param
+		);
 		return 'any';
 	}
 }
@@ -161,7 +192,7 @@ ${indent}}`;
 /**
  * Escape object key with quotation marks and add ? if it's optional.
  * @param key key name
- * @param schema the parameter defition
+ * @param schema the parameter definition
  */
 function getKey(key, schema) {
 	let suffix = '?';
