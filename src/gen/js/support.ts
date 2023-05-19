@@ -149,7 +149,7 @@ export function getTSParamType(
 				(key) =>
 					`${getKey(key, param)}: ${getTSParamType(
 						param.properties[key],
-						details,
+						{ prop: `${details.prop}.${key}` },
 						inTypesModule,
 						`${indent}${SP}`
 					)}`

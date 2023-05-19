@@ -2,10 +2,12 @@ import {
 	writeFileSync,
 	join,
 	groupOperationsByGroupName,
-	camelToUppercase,
 	getBestResponse,
 } from '../util';
 import { DOC, SP, ST, getDocType, getTSParamType } from './support';
+import Debug from 'debug';
+
+const debug = Debug('openapi:gen:ops');
 
 export default function genOperations(
 	spec: ApiSpec,
@@ -80,6 +82,7 @@ function renderOperation(
 	op: ApiOperation,
 	options: ClientOptions
 ): string[] {
+	debug('rendering operation', op.method, op.path);
 	const lines = [];
 	join(lines, renderOperationDocs(op));
 	join(lines, renderOperationBlock(spec, op, options));

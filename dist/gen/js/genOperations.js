@@ -1,8 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getParamName = exports.renderParamSignature = exports.renderOperationGroup = exports.genOperationGroupFiles = void 0;
 const util_1 = require("../util");
 const support_1 = require("./support");
+const debug_1 = __importDefault(require("debug"));
+const debug = (0, debug_1.default)('openapi:gen:ops');
 function genOperations(spec, operations, options) {
     const files = genOperationGroupFiles(spec, operations, options);
     files.forEach((file) => (0, util_1.writeFileSync)(file.path, file.contents));
@@ -47,6 +52,7 @@ function renderOperationGroup(group, func, spec, options) {
 }
 exports.renderOperationGroup = renderOperationGroup;
 function renderOperation(spec, op, options) {
+    debug('rendering operation', op.method, op.path);
     const lines = [];
     (0, util_1.join)(lines, renderOperationDocs(op));
     (0, util_1.join)(lines, renderOperationBlock(spec, op, options));

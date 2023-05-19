@@ -125,7 +125,7 @@ function getTSParamType(param, details, inTypesModule, indent = exports.SP) {
         if (param.properties) {
             const props = Object.keys(param.properties);
             return (0, common_tags_1.commaLists) `{
-  ${indent}${props.map((key) => `${getKey(key, param)}: ${getTSParamType(param.properties[key], details, inTypesModule, `${indent}${exports.SP}`)}`)}
+  ${indent}${props.map((key) => `${getKey(key, param)}: ${getTSParamType(param.properties[key], { prop: `${details.prop}.${key}` }, inTypesModule, `${indent}${exports.SP}`)}`)}
 ${indent}}`;
         }
         console.warn((0, chalk_1.yellow)(`Missing type information for "${details.prop}":`), param);
