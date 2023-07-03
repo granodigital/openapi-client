@@ -330,8 +330,7 @@ function renderTypeDoc(name, def) {
         `${support_1.DOC}@typedef ${name}`,
         `${support_1.DOC}@memberof module:${group}`,
     ];
-    const req = def.required || [];
-    const propLines = Object.keys(def.properties).map((prop) => {
+    const propLines = Object.keys(def.properties || {}).map((prop) => {
         const info = def.properties[prop];
         const description = (info.description || '')
             .trim()

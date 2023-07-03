@@ -345,8 +345,7 @@ function renderTypeDoc(name: string, def: any): string[] {
 		`${DOC}@typedef ${name}`,
 		`${DOC}@memberof module:${group}`,
 	];
-	const req = def.required || [];
-	const propLines = Object.keys(def.properties).map((prop) => {
+	const propLines = Object.keys(def.properties || {}).map((prop) => {
 		const info = def.properties[prop];
 		const description = (info.description || '')
 			.trim()
