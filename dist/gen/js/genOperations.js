@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getParamName = exports.renderParamSignature = exports.renderOperationGroup = exports.genOperationGroupFiles = void 0;
+exports.getParamName = exports.renderParamSignature = exports.renderDocParams = exports.renderDocDescription = exports.renderOperationGroup = exports.genOperationGroupFiles = void 0;
 const util_1 = require("../util");
 const support_1 = require("./support");
 const debug_1 = __importDefault(require("debug"));
@@ -19,12 +19,12 @@ function genOperationGroupFiles(spec, operations, options) {
     for (let name in groups) {
         const group = groups[name];
         const lines = [];
-        (0, util_1.join)(lines, renderHeader(name, spec, options));
-        (0, util_1.join)(lines, renderOperationGroup(group, renderOperation, spec, options));
+        lines.push(...renderHeader(name, spec, options));
+        lines.push(...renderOperationGroup(group, renderOperation, spec, options));
         if (options.language === 'ts') {
-            (0, util_1.join)(lines, renderOperationGroup(group, renderOperationParamType, spec, options));
+            lines.push(...renderOperationGroup(group, renderOperationParamType, spec, options));
         }
-        (0, util_1.join)(lines, renderOperationGroup(group, renderOperationInfo, spec, options));
+        lines.push(...renderOperationGroup(group, renderOperationInfo, spec, options));
         files.push({
             path: `${options.outDir}/${name}.${options.language}`,
             contents: lines.join('\n'),
@@ -54,24 +54,28 @@ exports.renderOperationGroup = renderOperationGroup;
 function renderOperation(spec, op, options) {
     debug('rendering operation', op.method, op.path);
     const lines = [];
-    (0, util_1.join)(lines, renderOperationDocs(op));
-    (0, util_1.join)(lines, renderOperationBlock(spec, op, options));
+    lines.push(...renderOperationDocs(op));
+    lines.push(...renderOperationBlock(spec, op, options));
     return lines;
 }
 function renderOperationDocs(op) {
     const lines = [];
     lines.push(`/**`);
-    (0, util_1.join)(lines, renderDocDescription(op));
-    (0, util_1.join)(lines, renderDocParams(op));
+    lines.push(...renderDocDescription(op, '[API] '));
+    lines.push(...renderDocParams(op));
+    lines.push(renderDocReturn(op));
     lines.push(` */`);
     return lines;
 }
-function renderDocDescription(op) {
+/** Renders description with optional prefix */
+function renderDocDescription(op, prefix) {
     const desc = op.description || op.summary;
     return desc
-        ? `${support_1.DOC}${desc.trim()}`.replace(/\n/g, `\n${support_1.DOC}`).split('\n')
+        ? `${support_1.DOC}${prefix}${desc.trim()}`.replace(/\n/g, `\n${support_1.DOC}`).split('\n')
         : [];
 }
+exports.renderDocDescription = renderDocDescription;
+/** Renders jsdoc \@param annotations */
 function renderDocParams(op) {
     const params = op.parameters;
     if (!params.length)
@@ -79,17 +83,18 @@ function renderDocParams(op) {
     const required = params.filter((param) => param.required);
     const optional = params.filter((param) => !param.required);
     const lines = [];
-    (0, util_1.join)(lines, required.map(renderDocParam));
+    lines.push(...required.map(renderDocParam));
     if (optional.length) {
         lines.push(`${support_1.DOC}@param {object} options Optional options`);
-        (0, util_1.join)(lines, optional.map(renderDocParam));
+        lines.push(...optional.map(renderDocParam));
     }
     if (op.description || op.summary) {
         lines.unshift(support_1.DOC);
     }
-    lines.push(renderDocReturn(op));
     return lines;
 }
+exports.renderDocParams = renderDocParams;
+/** Renders a single jsdoc \@param annotation */
 function renderDocParam(param) {
     let name = getParamName(param.name);
     let description = (param.description || '')
@@ -120,9 +125,9 @@ function renderDocReturn(op) {
 }
 function renderOperationBlock(spec, op, options) {
     const lines = [];
-    (0, util_1.join)(lines, renderOperationSignature(op, options));
-    (0, util_1.join)(lines, renderOperationObject(spec, op, options));
-    (0, util_1.join)(lines, renderRequestCall(op, options));
+    lines.push(...renderOperationSignature(op, options));
+    lines.push(...renderOperationObject(spec, op, options));
+    lines.push(...renderRequestCall(op, options));
     lines.push('');
     return lines;
 }
@@ -173,6 +178,7 @@ function getParamSignature(param, options) {
         signature.push((0, support_1.getTSParamType)(param, { prop: param.name }));
     return signature;
 }
+/** Returns capitalized version of name */
 function getParamName(name) {
     const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter((n) => !!n);
     const reduced = parts.reduce((name, p) => `${name}${p[0].toUpperCase()}${p.slice(1)}`);
@@ -227,7 +233,7 @@ function renderOperationObject(spec, op, options) {
     const names = Object.keys(parameters);
     const last = names.length - 1;
     names.forEach((name, i) => {
-        (0, util_1.join)(lines, renderParamGroup(name, parameters[name], i === last));
+        lines.push(...renderParamGroup(name, parameters[name], i === last));
     });
     if (lines.length) {
         if (options.language === 'ts') {
@@ -272,7 +278,7 @@ function groupParams(groups, param) {
 function renderParamGroup(name, groupLines, last) {
     const lines = [];
     lines.push(`${support_1.SP.repeat(2)}${name}: {`);
-    (0, util_1.join)(lines, groupLines.join(',\n').split('\n'));
+    lines.push(...groupLines.join(',\n').split('\n'));
     lines.push(`${support_1.SP.repeat(2)}}${last ? '' : ','}`);
     return lines;
 }
@@ -319,7 +325,7 @@ function renderOperationInfo(spec, op, options) {
     if (op.security && op.security.length) {
         const secLines = renderSecurityInfo(op.security);
         lines.push(`${support_1.SP}security: [`);
-        (0, util_1.join)(lines, secLines);
+        lines.push(...secLines);
         lines.push(`${support_1.SP}]`);
     }
     lines.push(`}${support_1.ST}`);
