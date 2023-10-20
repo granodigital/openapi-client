@@ -107,6 +107,7 @@ export function renderDocDescription(op: ApiOperation, prefix?: string) {
 		: [];
 }
 
+/** Renders jsdoc \@param annotations */
 export function renderDocParams(op: ApiOperation) {
 	const params = op.parameters;
 	if (!params.length) return [];
@@ -126,7 +127,8 @@ export function renderDocParams(op: ApiOperation) {
 	return lines;
 }
 
-function renderDocParam(param) {
+/** Renders a single jsdoc \@param annotation */
+function renderDocParam(param: ApiOperationParam) {
 	let name = getParamName(param.name);
 	let description = (param.description || '')
 		.trim()
@@ -238,6 +240,7 @@ function getParamSignature(
 	return signature;
 }
 
+/** Returns capitalized version of name */
 export function getParamName(name: string): string {
 	const parts = name.split(/[_-\s!@\#$%^&*\(\)]/g).filter((n) => !!n);
 	const reduced = parts.reduce(
