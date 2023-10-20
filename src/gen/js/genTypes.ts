@@ -1,4 +1,4 @@
-import { writeFileSync, join } from '../util';
+import { writeFileSync } from '../util';
 import { DOC, SP, ST, getDocType, getTSParamType } from './support';
 import Debug from 'debug';
 
@@ -11,8 +11,8 @@ export default function genTypes(spec: ApiSpec, options: ClientOptions) {
 
 export function genTypesFile(spec: ApiSpec, options: ClientOptions) {
 	const lines = [];
-	join(lines, renderHeader());
-	join(lines, renderDefinitions(spec, options));
+	lines.push(...renderHeader());
+	lines.push(...renderDefinitions(spec, options));
 	const ext = options.language === 'js' ? 'js' : 'd.ts';
 	return {
 		path: `${options.outDir}/types.${ext}`,
@@ -38,12 +38,12 @@ function renderDefinitions(spec: ApiSpec, options: ClientOptions): string[] {
 		debug('rendering type', name);
 		const def = defs[name];
 		if (isTs) {
-			join(typeLines, renderTsType(name, def, options));
+			typeLines.push(...renderTsType(name, def, options));
 		}
-		join(docLines, renderTypeDoc(name, def));
+		docLines.push(...renderTypeDoc(name, def));
 	});
 	if (isTs) {
-		join(typeLines, renderTsDefaultTypes());
+		typeLines.push(...renderTsDefaultTypes());
 		typeLines.push('}');
 	}
 	return isTs ? typeLines.concat(docLines) : docLines;
@@ -77,8 +77,8 @@ function renderTsType(name, def, options) {
 		.map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
 		.reduce((a, b) => a.concat(b), []);
 
-	join(lines, requiredPropLines);
-	join(lines, optionalPropLines);
+	lines.push(...requiredPropLines);
+	lines.push(...optionalPropLines);
 	lines.push('}');
 	lines.push('');
 	return lines;
@@ -356,7 +356,7 @@ function renderTypeDoc(name: string, def: any): string[] {
 		})}} ${prop} ${description}`;
 	});
 	if (propLines.length) lines.push(`${DOC}`);
-	join(lines, propLines);
+	lines.push(...propLines);
 	lines.push(' */');
 	lines.push('');
 	return lines;

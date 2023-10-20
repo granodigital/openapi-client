@@ -36,11 +36,22 @@ import * as ${name} from '../${name}'${support_1.ST}
 `.trim();
     return code;
 }
+function renderActionDocs(op) {
+    const lines = [
+        '/**',
+        ...(0, genOperations_1.renderDocDescription)(op, '[Action] '),
+        ...(0, genOperations_1.renderDocParams)(op),
+        `${support_1.DOC}@return {api.AsyncAction} API Action`,
+        ' */',
+    ];
+    return lines.join('\n');
+}
 function renderReduxActionBlock(spec, op, options) {
     const isTs = options.language === 'ts';
     const actionStart = (0, util_1.camelToUppercase)(op.id) + '_START';
     const actionComplete = (0, util_1.camelToUppercase)(op.id);
     const infoParam = isTs ? 'info?: any' : 'info';
+    const docs = renderActionDocs(op);
     let paramSignature = (0, genOperations_1.renderParamSignature)(op, options, `${op.group}.`);
     paramSignature += `${paramSignature ? ', ' : ''}${infoParam}`;
     const required = op.parameters.filter((param) => param.required);
@@ -60,6 +71,7 @@ export const ${actionStart} = 's/${op.group}/${actionStart}'${support_1.ST}
 export const ${actionComplete} = 's/${op.group}/${actionComplete}'${support_1.ST}
 ${isTs ? `export type ${actionComplete} = ${returnType}${support_1.ST}` : ''}
 
+${docs}
 export function ${op.id}(${paramSignature})${isTs ? ': api.AsyncAction' : ''} {
   return dispatch => {
     dispatch({ type: ${actionStart}, meta: { info, params: { ${params} } } })${support_1.ST}

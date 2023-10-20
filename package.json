@@ -16,8 +16,8 @@
 		"url": "https://github.com/mikestead/openapi-client/issues"
 	},
 	"engines": {
-		"node": ">=4.0.0",
-		"npm": ">=2.14.2"
+		"node": ">=18",
+		"npm": ">=8.6"
 	},
 	"main": "dist/index.js",
 	"bin": {

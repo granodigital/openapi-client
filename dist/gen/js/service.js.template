@@ -48,11 +48,13 @@ function acquireRights(op, spec, options) {
 }
 
 function makeFetchRequest(req) {
-	let fetchOptions = {
+	const isXmlRequest = req.headers['Content-Type']?.includes('/xml');
+	const body = isXmlRequest ? req.body : JSON.stringify(req.body || undefined);
+	const fetchOptions = {
 		compress: true,
 		method: (req.method || 'get').toUpperCase(),
 		headers: req.headers,
-		body: req.body ? JSON.stringify(req.body) : undefined,
+		body,
 	};
 
 	if (options.fetchOptions) {
@@ -65,7 +67,7 @@ function makeFetchRequest(req) {
 		fetchOptions.headers = headers;
 	}
 
-	let promise = fetch(req.url, fetchOptions);
+	const promise = fetch(req.url, fetchOptions);
 	return promise;
 }
 

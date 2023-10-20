@@ -15,8 +15,8 @@ function genTypes(spec, options) {
 exports.default = genTypes;
 function genTypesFile(spec, options) {
     const lines = [];
-    (0, util_1.join)(lines, renderHeader());
-    (0, util_1.join)(lines, renderDefinitions(spec, options));
+    lines.push(...renderHeader());
+    lines.push(...renderDefinitions(spec, options));
     const ext = options.language === 'js' ? 'js' : 'd.ts';
     return {
         path: `${options.outDir}/types.${ext}`,
@@ -41,12 +41,12 @@ function renderDefinitions(spec, options) {
         debug('rendering type', name);
         const def = defs[name];
         if (isTs) {
-            (0, util_1.join)(typeLines, renderTsType(name, def, options));
+            typeLines.push(...renderTsType(name, def, options));
         }
-        (0, util_1.join)(docLines, renderTypeDoc(name, def));
+        docLines.push(...renderTypeDoc(name, def));
     });
     if (isTs) {
-        (0, util_1.join)(typeLines, renderTsDefaultTypes());
+        typeLines.push(...renderTsDefaultTypes());
         typeLines.push('}');
     }
     return isTs ? typeLines.concat(docLines) : docLines;
@@ -75,8 +75,8 @@ function renderTsType(name, def, options) {
     const optionalPropLines = optionalProps
         .map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
         .reduce((a, b) => a.concat(b), []);
-    (0, util_1.join)(lines, requiredPropLines);
-    (0, util_1.join)(lines, optionalPropLines);
+    lines.push(...requiredPropLines);
+    lines.push(...optionalPropLines);
     lines.push('}');
     lines.push('');
     return lines;
@@ -342,7 +342,7 @@ function renderTypeDoc(name, def) {
     });
     if (propLines.length)
         lines.push(`${support_1.DOC}`);
-    (0, util_1.join)(lines, propLines);
+    lines.push(...propLines);
     lines.push(' */');
     lines.push('');
     return lines;
