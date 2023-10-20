@@ -94,18 +94,19 @@ function renderOperationDocs(op: ApiOperation): string[] {
 	lines.push(`/**`);
 	join(lines, renderDocDescription(op));
 	join(lines, renderDocParams(op));
+	lines.push(renderDocReturn(op));
 	lines.push(` */`);
 	return lines;
 }
 
-function renderDocDescription(op: ApiOperation) {
+export function renderDocDescription(op: ApiOperation) {
 	const desc = op.description || op.summary;
 	return desc
 		? `${DOC}${desc.trim()}`.replace(/\n/g, `\n${DOC}`).split('\n')
 		: [];
 }
 
-function renderDocParams(op: ApiOperation) {
+export function renderDocParams(op: ApiOperation) {
 	const params = op.parameters;
 	if (!params.length) return [];
 
@@ -121,7 +122,6 @@ function renderDocParams(op: ApiOperation) {
 	if (op.description || op.summary) {
 		lines.unshift(DOC);
 	}
-	lines.push(renderDocReturn(op));
 	return lines;
 }
 

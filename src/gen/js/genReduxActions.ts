@@ -4,11 +4,13 @@ import {
 	camelToUppercase,
 	getBestResponse,
 } from '../util';
-import { SP, ST, getTSParamType } from './support';
+import { DOC, SP, ST, getTSParamType } from './support';
 import {
+	renderDocParams,
+	getParamName,
 	renderParamSignature,
 	renderOperationGroup,
-	getParamName,
+	renderDocDescription,
 } from './genOperations';
 
 export default function genReduxActions(
@@ -60,6 +62,17 @@ import * as ${name} from '../${name}'${ST}
 	return code;
 }
 
+function renderDoc(op: ApiOperation): string {
+	const lines = [
+		'/**',
+		...renderDocDescription(op),
+		...renderDocParams(op),
+		`${DOC}@return {api.AsyncAction} API Action`,
+		' */',
+	];
+	return lines.join('\n');
+}
+
 function renderReduxActionBlock(
 	spec: ApiSpec,
 	op: ApiOperation,
@@ -69,6 +82,7 @@ function renderReduxActionBlock(
 	const actionStart = camelToUppercase(op.id) + '_START';
 	const actionComplete = camelToUppercase(op.id);
 	const infoParam = isTs ? 'info?: any' : 'info';
+	const docs = renderDoc(op);
 	let paramSignature = renderParamSignature(op, options, `${op.group}.`);
 	paramSignature += `${paramSignature ? ', ' : ''}${infoParam}`;
 	const required = op.parameters.filter((param) => param.required);
@@ -87,6 +101,7 @@ export const ${actionStart} = 's/${op.group}/${actionStart}'${ST}
 export const ${actionComplete} = 's/${op.group}/${actionComplete}'${ST}
 ${isTs ? `export type ${actionComplete} = ${returnType}${ST}` : ''}
 
+${docs}
 export function ${op.id}(${paramSignature})${isTs ? ': api.AsyncAction' : ''} {
   return dispatch => {
     dispatch({ type: ${actionStart}, meta: { info, params: { ${params} } } })${ST}
