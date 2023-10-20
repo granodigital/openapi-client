@@ -1,6 +1,5 @@
 import {
 	writeFileSync,
-	join,
 	groupOperationsByGroupName,
 	getBestResponse,
 } from '../util';
@@ -28,17 +27,16 @@ export function genOperationGroupFiles(
 	for (let name in groups) {
 		const group = groups[name];
 		const lines = [];
-		join(lines, renderHeader(name, spec, options));
-		join(lines, renderOperationGroup(group, renderOperation, spec, options));
+		lines.push(...renderHeader(name, spec, options));
+		lines.push(...renderOperationGroup(group, renderOperation, spec, options));
 		if (options.language === 'ts') {
-			join(
-				lines,
-				renderOperationGroup(group, renderOperationParamType, spec, options)
+			lines.push(
+				...renderOperationGroup(group, renderOperationParamType, spec, options)
 			);
 		}
-		join(
-			lines,
-			renderOperationGroup(group, renderOperationInfo, spec, options)
+
+		lines.push(
+			...renderOperationGroup(group, renderOperationInfo, spec, options)
 		);
 
 		files.push({
@@ -84,16 +82,16 @@ function renderOperation(
 ): string[] {
 	debug('rendering operation', op.method, op.path);
 	const lines = [];
-	join(lines, renderOperationDocs(op));
-	join(lines, renderOperationBlock(spec, op, options));
+	lines.push(...renderOperationDocs(op));
+	lines.push(...renderOperationBlock(spec, op, options));
 	return lines;
 }
 
 function renderOperationDocs(op: ApiOperation): string[] {
 	const lines = [];
 	lines.push(`/**`);
-	join(lines, renderDocDescription(op, '[API] '));
-	join(lines, renderDocParams(op));
+	lines.push(...renderDocDescription(op, '[API] '));
+	lines.push(...renderDocParams(op));
 	lines.push(renderDocReturn(op));
 	lines.push(` */`);
 	return lines;
@@ -116,10 +114,10 @@ export function renderDocParams(op: ApiOperation) {
 	const optional = params.filter((param) => !param.required);
 
 	const lines = [];
-	join(lines, required.map(renderDocParam));
+	lines.push(...required.map(renderDocParam));
 	if (optional.length) {
 		lines.push(`${DOC}@param {object} options Optional options`);
-		join(lines, optional.map(renderDocParam));
+		lines.push(...optional.map(renderDocParam));
 	}
 	if (op.description || op.summary) {
 		lines.unshift(DOC);
@@ -163,9 +161,9 @@ function renderOperationBlock(
 	options: ClientOptions
 ): string[] {
 	const lines = [];
-	join(lines, renderOperationSignature(op, options));
-	join(lines, renderOperationObject(spec, op, options));
-	join(lines, renderRequestCall(op, options));
+	lines.push(...renderOperationSignature(op, options));
+	lines.push(...renderOperationObject(spec, op, options));
+	lines.push(...renderRequestCall(op, options));
 	lines.push('');
 	return lines;
 }
@@ -304,7 +302,7 @@ function renderOperationObject(
 	const names = Object.keys(parameters);
 	const last = names.length - 1;
 	names.forEach((name, i) => {
-		join(lines, renderParamGroup(name, parameters[name], i === last));
+		lines.push(...renderParamGroup(name, parameters[name], i === last));
 	});
 
 	if (lines.length) {
@@ -354,7 +352,7 @@ function renderParamGroup(
 ): string[] {
 	const lines = [];
 	lines.push(`${SP.repeat(2)}${name}: {`);
-	join(lines, groupLines.join(',\n').split('\n'));
+	lines.push(...groupLines.join(',\n').split('\n'));
 	lines.push(`${SP.repeat(2)}}${last ? '' : ','}`);
 	return lines;
 }
@@ -417,7 +415,7 @@ function renderOperationInfo(
 	if (op.security && op.security.length) {
 		const secLines = renderSecurityInfo(op.security);
 		lines.push(`${SP}security: [`);
-		join(lines, secLines);
+		lines.push(...secLines);
 		lines.push(`${SP}]`);
 	}
 	lines.push(`}${ST}`);
