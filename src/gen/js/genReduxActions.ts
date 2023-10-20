@@ -65,7 +65,7 @@ import * as ${name} from '../${name}'${ST}
 function renderDoc(op: ApiOperation): string {
 	const lines = [
 		'/**',
-		...renderDocDescription(op),
+		...renderDocDescription(op, '[Action] '),
 		...renderDocParams(op),
 		`${DOC}@return {api.AsyncAction} API Action`,
 		' */',

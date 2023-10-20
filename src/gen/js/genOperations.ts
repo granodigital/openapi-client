@@ -92,17 +92,18 @@ function renderOperation(
 function renderOperationDocs(op: ApiOperation): string[] {
 	const lines = [];
 	lines.push(`/**`);
-	join(lines, renderDocDescription(op));
+	join(lines, renderDocDescription(op, '[API] '));
 	join(lines, renderDocParams(op));
 	lines.push(renderDocReturn(op));
 	lines.push(` */`);
 	return lines;
 }
 
-export function renderDocDescription(op: ApiOperation) {
+/** Renders description with optional prefix */
+export function renderDocDescription(op: ApiOperation, prefix?: string) {
 	const desc = op.description || op.summary;
 	return desc
-		? `${DOC}${desc.trim()}`.replace(/\n/g, `\n${DOC}`).split('\n')
+		? `${DOC}${prefix}${desc.trim()}`.replace(/\n/g, `\n${DOC}`).split('\n')
 		: [];
 }
 
