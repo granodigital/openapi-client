@@ -62,7 +62,7 @@ import * as ${name} from '../${name}'${ST}
 	return code;
 }
 
-function renderDoc(op: ApiOperation): string {
+function renderActionDocs(op: ApiOperation): string {
 	const lines = [
 		'/**',
 		...renderDocDescription(op, '[Action] '),
@@ -82,7 +82,7 @@ function renderReduxActionBlock(
 	const actionStart = camelToUppercase(op.id) + '_START';
 	const actionComplete = camelToUppercase(op.id);
 	const infoParam = isTs ? 'info?: any' : 'info';
-	const docs = renderDoc(op);
+	const docs = renderActionDocs(op);
 	let paramSignature = renderParamSignature(op, options, `${op.group}.`);
 	paramSignature += `${paramSignature ? ', ' : ''}${infoParam}`;
 	const required = op.parameters.filter((param) => param.required);
