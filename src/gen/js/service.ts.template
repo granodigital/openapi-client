@@ -80,11 +80,10 @@ function makeFetchRequest(req: api.ServiceRequest): Promise<Response> {
 			? Object.assign(fetchOptions.headers, opts.headers)
 			: fetchOptions.headers;
 
-		fetchOptions = Object.assign({}, fetchOptions, opts);
-		fetchOptions.headers = headers;
+		Object.assign(fetchOptions, opts, { headers });
 	}
 
-	let promise = fetch(req.url, fetchOptions);
+	const promise = fetch(req.url, fetchOptions);
 	return promise;
 }
 
