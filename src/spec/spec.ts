@@ -1,5 +1,11 @@
 import * as YAML from 'js-yaml';
 import 'cross-fetch/polyfill';
+import { OpenAPI, OpenAPIV3 } from 'openapi-types';
+
+/** Type guard to check if spec is OpenAPI 3.x */
+function isOpenApi3(spec: OpenAPI.Document): spec is OpenAPIV3.Document {
+	return 'openapi' in spec;
+}
 
 export interface SpecOptions {
 	/**
@@ -9,7 +15,7 @@ export interface SpecOptions {
 }
 
 export function resolveSpec(
-	src: string | Object,
+	src: string | OpenAPI.Document,
 	options?: SpecOptions,
 	authKey?: string
 ): Promise<ApiSpec> {
@@ -19,11 +25,11 @@ export function resolveSpec(
 			formatSpec(spec, src, options)
 		);
 	} else {
-		return Promise.resolve(formatSpec(<ApiSpec>src, null, options));
+		return Promise.resolve(formatSpec(src, null, options));
 	}
 }
 
-function loadJson(src: string, authKey: string): Promise<ApiSpec> {
+function loadJson(src: string, authKey: string): Promise<OpenAPI.Document> {
 	if (/^https?:\/\//im.test(src)) {
 		const headers = new Headers();
 		if (authKey) headers.append('Open-Api-Spec-Auth-Key', authKey);
@@ -49,25 +55,62 @@ function parseFileContents(contents: string, path: string): any {
 }
 
 function formatSpec(
-	spec: ApiSpec,
+	spec: OpenAPI.Document,
 	src?: string,
 	options?: SpecOptions
 ): ApiSpec {
-	if (!spec.basePath) spec.basePath = '';
-	else if (spec.basePath.endsWith('/'))
-		spec.basePath = spec.basePath.slice(0, -1);
+	// Use any for the result since we're building up a Swagger 2.0-like internal format
+	const s: any = spec;
+
+	// Handle OpenAPI 3.0 -> internal format conversion
+	if (isOpenApi3(spec)) {
+		// servers[] -> host/basePath/schemes
+		if (spec.servers && spec.servers.length > 0) {
+			const serverUrl = spec.servers[0].url;
+			try {
+				// Handle absolute URLs
+				if (serverUrl.startsWith('http://') || serverUrl.startsWith('https://')) {
+					const url = new URL(serverUrl);
+					if (!s.host) s.host = url.host;
+					if (!s.basePath) s.basePath = url.pathname;
+					if (!s.schemes || !s.schemes.length) {
+						s.schemes = [url.protocol.slice(0, -1)]; // remove trailing ':'
+					}
+				} else {
+					// Relative URL (e.g., '/v2')
+					if (!s.basePath) s.basePath = serverUrl;
+				}
+			} catch {
+				// If URL parsing fails, treat as relative path
+				if (!s.basePath) s.basePath = serverUrl;
+			}
+		}
+
+		// components.schemas -> definitions
+		if (spec.components?.schemas && !s.definitions) {
+			s.definitions = spec.components.schemas;
+		}
+
+		// components.securitySchemes -> securityDefinitions
+		if (spec.components?.securitySchemes && !s.securityDefinitions) {
+			s.securityDefinitions = spec.components.securitySchemes;
+		}
+	}
+
+	if (!s.basePath) s.basePath = '';
+	else if (s.basePath.endsWith('/'))
+		s.basePath = s.basePath.slice(0, -1);
 
 	if (src && /^https?:\/\//im.test(src)) {
 		const parts = src.split('/');
-		if (!spec.host) spec.host = parts[2];
-		if (!spec.schemes || !spec.schemes.length)
-			spec.schemes = [parts[0].slice(0, -1)];
+		if (!s.host) s.host = parts[2];
+		if (!s.schemes || !s.schemes.length)
+			s.schemes = [parts[0].slice(0, -1)];
 	} else {
-		if (!spec.host) spec.host = 'localhost';
-		if (!spec.schemes || !spec.schemes.length) spec.schemes = ['http'];
+		if (!s.host) s.host = 'localhost';
+		if (!s.schemes || !s.schemes.length) s.schemes = ['http'];
 	}
 
-	const s: any = spec;
 	if (!s.produces || !s.produces.length) {
 		s.accepts = ['application/json']; // give sensible default
 	} else {
@@ -80,11 +123,13 @@ function formatSpec(
 	delete s.consumes;
 	delete s.produces;
 
-	return <ApiSpec>expandRefs(spec, spec, options);
+	return <ApiSpec>expandRefs(s, s, options);
 }
 
 /**
  * Recursively expand internal references in the form `#/path/to/object`.
+ * Only expands refs to #/components/parameters/ - schemas ($refs to #/components/schemas/)
+ * are preserved for the type generator to handle.
  *
  * @param {object} data the object to search for and update refs
  * @param {object} lookup the object to clone refs from
@@ -106,9 +151,13 @@ export function expandRefs(
 			data.$ref &&
 			!(options.ignoreRefType && data.$ref.startsWith(options.ignoreRefType))
 		) {
-			const resolved = expandRef(data.$ref, lookup);
-			delete data.$ref;
-			data = Object.assign({}, resolved, data);
+			// Only expand refs that are NOT schema refs (schema refs are handled by type generator)
+			// This prevents circular reference issues when schemas reference each other
+			if (!data.$ref.startsWith('#/components/schemas/') && !data.$ref.startsWith('#/definitions/')) {
+				const resolved = expandRef(data.$ref, lookup);
+				delete data.$ref;
+				data = Object.assign({}, resolved, data);
+			}
 		}
 		dataCache.add(data);
 		for (let name in data) {
