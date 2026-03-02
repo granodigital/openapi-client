@@ -62,6 +62,25 @@ function getPathOperation(
 
 	inheritPathParams(op, spec, pathInfo);
 
+	// Handle OpenAPI 3.0 requestBody -> convert to body parameter
+	if (op.requestBody) {
+		const content = op.requestBody.content;
+		const contentType = Object.keys(content || {})[0] || 'application/json';
+		const mediaType = content?.[contentType];
+		if (mediaType?.schema) {
+			// Use x-codegen-request-body-name extension if available, otherwise default to 'body'
+			const bodyName = op.requestBody['x-codegen-request-body-name'] || 'body';
+			op.parameters.push({
+				name: bodyName,
+				in: 'body',
+				required: op.requestBody.required === true, // Only positional when explicitly required
+				schema: mediaType.schema,
+				description: op.requestBody.description || '',
+			});
+		}
+		delete op.requestBody;
+	}
+
 	op.group = getOperationGroupName(op);
 	delete op.operationId;
 	op.responses = getOperationResponses(op);
@@ -80,7 +99,7 @@ function getPathOperation(
 }
 
 function getOperationGroupName(op: any): string {
-	let name = op.tags && op.tags.length ? op.tags[0] : 'default';
+	let name = op.tags && op.tags.length ? op.tags[0] : 'other';
 	name = name.replace(/[^$_a-z0-9]+/gi, '');
 	return name.replace(/^[0-9]+/m, '');
 }
@@ -89,6 +108,15 @@ function getOperationResponses(op: any): ApiOperationResponse[] {
 	return Object.keys(op.responses || {}).map((code) => {
 		const info = op.responses[code];
 		info.code = code;
+		// Handle OpenAPI 3.0 response content -> schema conversion
+		if (info.content && !info.schema) {
+			const contentType =
+				Object.keys(info.content)[0] || 'application/json';
+			const mediaType = info.content[contentType];
+			if (mediaType?.schema) {
+				info.schema = mediaType.schema;
+			}
+		}
 		return info;
 	});
 }
