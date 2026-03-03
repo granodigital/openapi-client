@@ -126,10 +126,12 @@ function formatSpec(spec, src, options) {
     else {
         s.accepts = s.produces;
     }
-    if (!s.consumes)
-        s.contentTypes = [];
-    else
+    if (!s.consumes || !s.consumes.length) {
+        s.contentTypes = ['application/json'];
+    }
+    else {
         s.contentTypes = s.consumes;
+    }
     delete s.consumes;
     delete s.produces;
     return expandRefs(s, s, options);

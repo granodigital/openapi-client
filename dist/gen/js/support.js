@@ -77,6 +77,7 @@ function getTSParamType(param, details, inTypesModule, indent = exports.SP, visi
     // Detect circular references by tracking visited schema objects
     if (param && typeof param === 'object') {
         if (visitedSchemas.has(param)) {
+            console.warn((0, chalk_1.yellow)(`Circular reference detected for "${details.prop}".`));
             return 'any';
         }
         visitedSchemas = new Set(visitedSchemas);
