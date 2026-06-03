@@ -226,8 +226,12 @@ export interface ServiceOptions {
   /**
    * If a fetch request fails this function gives you a chance to process
    * that error before it's returned up the promise chain to the original caller.
+   *
+   * As with processResponse you can flag a retry by returning
+   * { res, retry: true }, and the "attempt" param tells you how many times a
+   * retry has been attempted (so you can cap connection-level retries).
    */
-  processError?: (req: api.ServiceRequest, res: api.ResponseOutcome) => Promise<api.ResponseOutcome>${support_1.ST}
+  processError?: (req: api.ServiceRequest, res: api.ResponseOutcome, attempt: number) => Promise<api.ResponseOutcome>${support_1.ST}
   /**
    * By default the authorization header name is "Authorization".
    * This property allows you to override it.

@@ -22,7 +22,7 @@ export function request(op, parameters, attempt) {
 		return makeFetchRequest(req)
 			.then(
 				(res) => processResponse(req, res, attempt, options),
-				(e) => processError(req, e)
+				(e) => processError(req, e, attempt)
 			)
 			.then((outcome) =>
 				outcome.retry ? request(op, parameters, attempt + 1) : outcome.res
@@ -284,11 +284,11 @@ function formatServiceError(response, data, options) {
 	return { raw: response, data, error: true };
 }
 
-function processError(req, error) {
+function processError(req, error, attempt) {
 	const { processError } = options;
 	const res = { res: { raw: {}, data: error, error: true } };
 
-	return Promise.resolve(processError ? processError(req, res) : res);
+	return Promise.resolve(processError ? processError(req, res, attempt) : res);
 }
 
 const COLLECTION_DELIM = {

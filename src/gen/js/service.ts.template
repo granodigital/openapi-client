@@ -32,7 +32,7 @@ export function request<T>(
 		return makeFetchRequest(req)
 			.then(
 				(res) => processResponse(req, <any>res, attempt, options),
-				(e) => processError(req, e)
+				(e) => processError(req, e, attempt)
 			)
 			.then((outcome) =>
 				outcome.retry ? request<any>(op, parameters, attempt + 1) : outcome.res
@@ -329,13 +329,13 @@ function formatServiceError(
 	return { raw: response, data, error: true };
 }
 
-function processError(req, error) {
+function processError(req, error, attempt) {
 	const { processError } = options;
 	const res: api.ResponseOutcome = {
 		res: { raw: null, data: { message: error.message }, error: true },
 	};
 
-	return Promise.resolve(processError ? processError(req, res) : res);
+	return Promise.resolve(processError ? processError(req, res, attempt) : res);
 }
 
 const COLLECTION_DELIM = {
