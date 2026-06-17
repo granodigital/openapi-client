@@ -411,6 +411,15 @@ function renderOperationInfo(
 	if (hasBody && op.contentTypes.length) {
 		lines.push(`${SP}contentTypes: ['${op.contentTypes.join("','")}'],`);
 	}
+	// Only emit `accepts` when it carries real signal (e.g. XML); JSON is the
+	// gateway default, so omitting it keeps JSON clients byte-identical.
+	if (
+		op.accepts &&
+		op.accepts.length &&
+		!(op.accepts.length === 1 && op.accepts[0] === 'application/json')
+	) {
+		lines.push(`${SP}accepts: ['${op.accepts.join("','")}'],`);
+	}
 	lines.push(`${SP}method: '${op.method}'${op.security ? ',' : ''}`);
 	if (op.security && op.security.length) {
 		const secLines = renderSecurityInfo(op.security);
