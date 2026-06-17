@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Content Type Test
+paths:
+  /xml:
+    post:
+      operationId: xmlEcho
+      tags:
+        - ct
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: ok
+          content:
+            application/xml:
+              schema:
+                type: string
+  /json:
+    post:
+      operationId: jsonCreate
+      tags:
+        - ct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+  /mixed:
+    post:
+      operationId: jsonReqXmlResp
+      tags:
+        - ct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: ok
+          content:
+            application/xml:
+              schema:
+                type: string

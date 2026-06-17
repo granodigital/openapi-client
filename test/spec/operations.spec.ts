@@ -24,4 +24,34 @@ describe('operations', () => {
 		const resDefault = listPets.responses.find((res) => res.code === 'default');
 		expect(resDefault).not.toBeFalsy();
 	});
+
+	describe('OpenAPI 3.0 content types', () => {
+		let operations: any[];
+		beforeAll(async () => {
+			const spec = await resolveSpec(`${__dirname}/../openapi3.yml`);
+			operations = getOperations(spec);
+		});
+
+		it('derives request contentTypes from requestBody.content (XML)', () => {
+			const op = operations.find((o) => o.id === 'xmlEcho');
+			expect(op.contentTypes).toEqual(['application/xml']);
+		});
+
+		it('derives accepts from the success response content (XML)', () => {
+			const op = operations.find((o) => o.id === 'xmlEcho');
+			expect(op.accepts).toEqual(['application/xml']);
+		});
+
+		it('keeps JSON request/response as application/json', () => {
+			const op = operations.find((o) => o.id === 'jsonCreate');
+			expect(op.contentTypes).toEqual(['application/json']);
+			expect(op.accepts).toEqual(['application/json']);
+		});
+
+		it('derives request and response content types independently', () => {
+			const op = operations.find((o) => o.id === 'jsonReqXmlResp');
+			expect(op.contentTypes).toEqual(['application/json']);
+			expect(op.accepts).toEqual(['application/xml']);
+		});
+	});
 });

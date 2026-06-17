@@ -58,6 +58,12 @@ function getPathOperation(method, pathInfo, spec) {
                 description: op.requestBody.description || '',
             });
         }
+        // OpenAPI 3.0 encodes the request media type(s) under requestBody.content
+        // (Swagger 2.0 used `consumes`). Propagate them so non-JSON bodies (e.g. XML)
+        // are not defaulted to application/json downstream.
+        const requestContentTypes = Object.keys(content || {});
+        if (requestContentTypes.length)
+            op.contentTypes = requestContentTypes;
         delete op.requestBody;
     }
     op.group = getOperationGroupName(op);
@@ -71,6 +77,14 @@ function getPathOperation(method, pathInfo, spec) {
         operation.accepts = operation.produces;
     delete operation.consumes;
     delete operation.produces;
+    // OpenAPI 3.0 encodes response media types under responses[code].content
+    // (Swagger 2.0 used `produces`). Derive the Accept header from the success
+    // responses so non-JSON responses (e.g. XML) are not defaulted to JSON.
+    if (!op.accepts || !op.accepts.length) {
+        const responseContentTypes = getResponseContentTypes(op.responses);
+        if (responseContentTypes.length)
+            op.accepts = responseContentTypes;
+    }
     if (!op.contentTypes || !op.contentTypes.length)
         op.contentTypes = spec.contentTypes.slice();
     if (!op.accepts || !op.accepts.length)
@@ -96,6 +110,21 @@ function getOperationResponses(op) {
         }
         return info;
     });
+}
+function getResponseContentTypes(responses) {
+    const types = [];
+    for (const res of responses || []) {
+        if (!res || !res.content)
+            continue;
+        // Only success responses inform the Accept header the client sends.
+        if (!/^2/.test(String(res.code)))
+            continue;
+        for (const type of Object.keys(res.content)) {
+            if (!types.includes(type))
+                types.push(type);
+        }
+    }
+    return types;
 }
 function getOperationSecurity(op, spec) {
     let security;
