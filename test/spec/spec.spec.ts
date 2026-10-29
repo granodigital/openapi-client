@@ -22,4 +22,33 @@ describe('spec', () => {
 		expect(spec.definitions).not.toBeFalsy();
 		expect(spec.paths).not.toBeFalsy();
 	});
+
+	describe('schema refs', () => {
+		const specWithRef = (ref: string) => ({
+			openapi: '3.0.0',
+			info: { title: 'Test', version: '1' },
+			paths: {
+				'/a': {
+					get: {
+						responses: {
+							200: { description: 'OK', content: { 'application/json': { schema: { $ref: ref } } } },
+						},
+					},
+				},
+			},
+			components: { schemas: { Existing: { type: 'object' } } },
+		});
+
+		it('should keep a schema ref that resolves', async () => {
+			const spec = await resolveSpec(specWithRef('#/components/schemas/Existing') as any);
+			const response: any = spec.paths['/a'].get.responses[200];
+			expect(response.content['application/json'].schema.$ref).toBe('#/components/schemas/Existing');
+		});
+
+		it('should fail when a schema ref points to no schema', async () => {
+			await expect(async () => resolveSpec(specWithRef('#/components/schemas/Missing') as any)).rejects.toThrow(
+				'Invalid schema reference: #/components/schemas/Missing'
+			);
+		});
+	});
 });

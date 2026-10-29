@@ -160,6 +160,10 @@ export function expandRefs(
 				const resolved = expandRef(data.$ref, lookup);
 				delete data.$ref;
 				data = Object.assign({}, resolved, data);
+			} else {
+				// The type generator names the type after the ref without checking it, so a ref to a missing
+				// schema would only fail when the generated code is compiled.
+				expandRef(data.$ref, lookup);
 			}
 		}
 		dataCache.add(data);
