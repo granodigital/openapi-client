@@ -116,6 +116,41 @@ describe('genTypes', () => {
 			);
 		});
 
+		it('should add an any index signature when another schema extends the schema', () => {
+			expect(getBlock(contents, 'export interface LabelMap {')).toBe(
+				[
+					'export interface LabelMap {',
+					'  id: string',
+					'  [key: string]: any',
+					'}',
+				].join('\n')
+			);
+		});
+
+		it('should add an index signature when additionalProperties sits next to allOf', () => {
+			expect(
+				getBlock(contents, 'export interface OuterExtra extends Dimensions {')
+			).toBe(
+				[
+					'export interface OuterExtra extends Dimensions {',
+					'  depth?: number',
+					'  [key: string]: any',
+					'}',
+				].join('\n')
+			);
+		});
+
+		it('should widen the index signature with the type the property renderer gives', () => {
+			expect(getBlock(contents, 'export interface TagFlags {')).toBe(
+				[
+					'export interface TagFlags {',
+					'  tags?: string[]',
+					'  [key: string]: boolean | string[] | undefined',
+					'}',
+				].join('\n')
+			);
+		});
+
 		it('should keep the interface unchanged when additionalProperties is missing or false', () => {
 			expect(getBlock(contents, 'export interface Dimensions {')).toBe(
 				[

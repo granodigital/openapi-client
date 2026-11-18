@@ -37,11 +37,12 @@ function renderDefinitions(spec, options) {
     const defs = spec.definitions || {};
     const typeLines = isTs ? [`namespace api {`] : undefined;
     const docLines = [];
+    const parentNames = getAllOfParentNames(defs);
     Object.keys(defs).forEach((name) => {
         debug('rendering type', name);
         const def = defs[name];
         if (isTs) {
-            typeLines.push(...renderTsType(name, def, options));
+            typeLines.push(...renderTsType(name, def, options, parentNames));
         }
         docLines.push(...renderTypeDoc(name, def));
     });
@@ -51,9 +52,17 @@ function renderDefinitions(spec, options) {
     }
     return isTs ? typeLines.concat(docLines) : docLines;
 }
-function renderTsType(name, def, options, hasParent = false) {
+/** Names of the definitions that another definition extends with `allOf`. */
+function getAllOfParentNames(defs) {
+    const names = Object.keys(defs)
+        .map((name) => defs[name]?.allOf?.[0]?.$ref)
+        .filter((ref) => typeof ref === 'string')
+        .map((ref) => ref.split('/').pop());
+    return new Set(names);
+}
+function renderTsType(name, def, options, parentNames, hasParent = false) {
     if (def.allOf)
-        return renderTsInheritance(name, def.allOf, options);
+        return renderTsInheritance(name, def, options, parentNames);
     if (def.type !== 'object') {
         console.warn(`Unable to render ${name} ${def.type}, skipping.`);
         return [];
@@ -77,18 +86,24 @@ function renderTsType(name, def, options, hasParent = false) {
         .reduce((a, b) => a.concat(b), []);
     lines.push(...requiredPropLines);
     lines.push(...optionalPropLines);
-    const indexType = getTsIndexType(name, def, hasParent);
+    const indexType = getTsIndexType(name, def, hasParent || parentNames.has(name));
     if (indexType)
         lines.push(`${support_1.SP}[key: string]: ${indexType}${support_1.ST}`);
     lines.push('}');
     lines.push('');
     return lines;
 }
-function renderTsInheritance(name, allOf, options) {
+function renderTsInheritance(name, def, options, parentNames) {
+    const { allOf } = def;
     verifyAllOf(name, allOf);
     const ref = allOf[0];
     const parentName = ref.$ref.split('/').pop();
-    const lines = renderTsType(name, allOf[1], options, true);
+    // `additionalProperties` can sit next to `allOf` instead of in the child schema.
+    const child = {
+        ...allOf[1],
+        additionalProperties: allOf[1].additionalProperties ?? def.additionalProperties,
+    };
+    const lines = renderTsType(name, child, options, parentNames, true);
     if (lines[0].startsWith('export interface'))
         lines.shift();
     lines.unshift(`export interface ${name} extends ${parentName} {`);
@@ -111,15 +126,15 @@ function renderTsTypeProp(prop, info, required) {
  * Type of the index signature for a schema with `additionalProperties`, or
  * undefined when the schema has none.
  */
-function getTsIndexType(name, def, hasParent) {
+function getTsIndexType(name, def, isInherited) {
     const extra = def.additionalProperties;
     if (!extra)
         return undefined;
     if (extra === true || Object.keys(extra).length === 0)
         return 'any';
-    // TS requires every declared property to fit the index signature. The parent's
-    // properties are not known here, so a child of allOf inheritance gets `any`.
-    if (hasParent)
+    // TS requires every property to fit the index signature, also the properties a parent
+    // or child interface declares. Those are not known here, so allOf schemas get `any`.
+    if (isInherited)
         return 'any';
     const members = new Set(getTsUnionMembers(extra, `${name}[key]`));
     const props = def.properties || {};
@@ -136,14 +151,41 @@ function getTsIndexType(name, def, hasParent) {
     }
     return Array.from(members).join(' | ');
 }
-/** TS types of a schema's union members: each oneOf/anyOf schema, and `null` if nullable. */
+/**
+ * Members of the TS type that the property renderer gives a schema. Splitting the rendered
+ * type keeps the precedence of `getTSParamType`, for example `type: array` over `oneOf`.
+ */
 function getTsUnionMembers(schema, prop) {
-    const { nullable, ...nonNullable } = schema;
-    const schemas = nonNullable.oneOf || nonNullable.anyOf || [nonNullable];
-    const types = schemas.map((member) => (0, support_1.getTSParamType)(member, { prop }, true));
-    if (nullable === true)
-        types.push('null');
-    return types;
+    return splitTopLevelUnion((0, support_1.getTSParamType)(schema, { prop }, true));
+}
+/** Splits a TS type at the `|` signs outside brackets and string literals. */
+function splitTopLevelUnion(type) {
+    const members = [];
+    let depth = 0;
+    let quote = '';
+    let start = 0;
+    for (let i = 0; i < type.length; i++) {
+        const char = type[i];
+        if (quote) {
+            if (char === quote && type[i - 1] !== '\\')
+                quote = '';
+        }
+        else if (char === "'" || char === '"') {
+            quote = char;
+        }
+        else if ('{([<'.includes(char)) {
+            depth++;
+        }
+        else if ('})]>'.includes(char)) {
+            depth--;
+        }
+        else if (char === '|' && depth === 0) {
+            members.push(type.slice(start, i).trim());
+            start = i + 1;
+        }
+    }
+    members.push(type.slice(start).trim());
+    return members;
 }
 function renderTsDefaultTypes() {
     return `export interface OpenApiSpec {

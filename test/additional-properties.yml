@@ -80,3 +80,43 @@ components:
               type: number
           additionalProperties:
             type: string
+    LabelMap:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+      additionalProperties:
+        type: string
+    LabelMapChild:
+      allOf:
+        - $ref: '#/components/schemas/LabelMap'
+        - type: object
+          properties:
+            label:
+              type: string
+    OuterExtra:
+      allOf:
+        - $ref: '#/components/schemas/Dimensions'
+        - type: object
+          properties:
+            depth:
+              type: number
+      additionalProperties: true
+    TagFlags:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          oneOf:
+            - type: array
+              items:
+                type: string
+                enum:
+                  - new
+                  - sale
+      additionalProperties:
+        type: boolean
