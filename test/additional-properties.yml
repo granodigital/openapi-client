@@ -1,0 +1,82 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Additional Properties Test
+paths: {}
+components:
+  schemas:
+    SelectedOptions:
+      description: Known option keys plus dynamic ones
+      type: object
+      required:
+        - order_quantity
+      properties:
+        order_quantity:
+          type: number
+        size:
+          type: string
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+        note:
+          type: string
+          nullable: true
+        meta:
+          type: object
+          properties:
+            source:
+              type: string
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+    UntypedOptions:
+      type: object
+      properties:
+        count:
+          type: number
+        legacy: {}
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: number
+    FreeForm:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+      additionalProperties: true
+    StringMap:
+      type: object
+      additionalProperties:
+        type: string
+    RefMap:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Dimensions'
+    Dimensions:
+      type: object
+      required:
+        - width
+      properties:
+        width:
+          type: number
+        height:
+          type: number
+    Closed:
+      type: object
+      properties:
+        id:
+          type: string
+      additionalProperties: false
+    DeepDimensions:
+      allOf:
+        - $ref: '#/components/schemas/Dimensions'
+        - type: object
+          properties:
+            depth:
+              type: number
+          additionalProperties:
+            type: string

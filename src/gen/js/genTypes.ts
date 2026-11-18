@@ -49,7 +49,7 @@ function renderDefinitions(spec: ApiSpec, options: ClientOptions): string[] {
 	return isTs ? typeLines.concat(docLines) : docLines;
 }
 
-function renderTsType(name, def, options) {
+function renderTsType(name, def, options, hasParent = false) {
 	if (def.allOf) return renderTsInheritance(name, def.allOf, options);
 	if (def.type !== 'object') {
 		console.warn(`Unable to render ${name} ${def.type}, skipping.`);
@@ -79,6 +79,8 @@ function renderTsType(name, def, options) {
 
 	lines.push(...requiredPropLines);
 	lines.push(...optionalPropLines);
+	const indexType = getTsIndexType(name, def, hasParent);
+	if (indexType) lines.push(`${SP}[key: string]: ${indexType}${ST}`);
 	lines.push('}');
 	lines.push('');
 	return lines;
@@ -92,7 +94,7 @@ function renderTsInheritance(
 	verifyAllOf(name, allOf);
 	const ref = allOf[0];
 	const parentName = ref.$ref.split('/').pop();
-	const lines = renderTsType(name, allOf[1], options);
+	const lines = renderTsType(name, allOf[1], options, true);
 	if (lines[0].startsWith('export interface')) lines.shift();
 	lines.unshift(`export interface ${name} extends ${parentName} {`);
 	return lines;
@@ -116,6 +118,45 @@ function renderTsTypeProp(
 	const req = required ? '' : '?';
 	lines.push(`${SP}${prop}${req}: ${type}${ST}`);
 	return lines;
+}
+
+/**
+ * Type of the index signature for a schema with `additionalProperties`, or
+ * undefined when the schema has none.
+ */
+function getTsIndexType(
+	name: string,
+	def: any,
+	hasParent: boolean
+): string | undefined {
+	const extra = def.additionalProperties;
+	if (!extra) return undefined;
+	if (extra === true || Object.keys(extra).length === 0) return 'any';
+	// TS requires every declared property to fit the index signature. The parent's
+	// properties are not known here, so a child of allOf inheritance gets `any`.
+	if (hasParent) return 'any';
+	const members = new Set(getTsUnionMembers(extra, `${name}[key]`));
+	const props = def.properties || {};
+	const required = def.required || [];
+	Object.keys(props).forEach((prop) => {
+		const types = getTsUnionMembers(props[prop], prop);
+		// A property typed `any` fits every index signature, so it does not widen it.
+		if (!types.includes('any')) types.forEach((type) => members.add(type));
+	});
+	// Strict mode reads an optional property as `T | undefined`.
+	if (Object.keys(props).some((prop) => !required.includes(prop))) {
+		members.add('undefined');
+	}
+	return Array.from(members).join(' | ');
+}
+
+/** TS types of a schema's union members: each oneOf/anyOf schema, and `null` if nullable. */
+function getTsUnionMembers(schema: any, prop: string): string[] {
+	const { nullable, ...nonNullable } = schema;
+	const schemas = nonNullable.oneOf || nonNullable.anyOf || [nonNullable];
+	const types = schemas.map((member) => getTSParamType(member, { prop }, true));
+	if (nullable === true) types.push('null');
+	return types;
 }
 
 function renderTsDefaultTypes() {
