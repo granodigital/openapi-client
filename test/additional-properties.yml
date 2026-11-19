@@ -120,3 +120,10 @@ components:
                   - sale
       additionalProperties:
         type: boolean
+    DescribedExtra:
+      type: object
+      properties:
+        count:
+          type: number
+      additionalProperties:
+        description: Any extra value

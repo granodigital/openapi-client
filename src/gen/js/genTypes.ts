@@ -85,12 +85,22 @@ function renderTsType(
 	const requiredProps = props.filter((p) => !!~required.indexOf(p));
 	const optionalProps = props.filter((p) => !~required.indexOf(p));
 
+	// Render each type once, so a property without type info warns only once.
+	const propTypes: { [prop: string]: string } = {};
+	props.forEach((prop) => {
+		propTypes[prop] = getTSParamType(def.properties[prop], { prop }, true);
+	});
+
 	const requiredPropLines = requiredProps
-		.map((prop) => renderTsTypeProp(prop, def.properties[prop], true))
+		.map((prop) =>
+			renderTsTypeProp(prop, def.properties[prop], propTypes[prop], true)
+		)
 		.reduce((a, b) => a.concat(b), []);
 
 	const optionalPropLines = optionalProps
-		.map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
+		.map((prop) =>
+			renderTsTypeProp(prop, def.properties[prop], propTypes[prop], false)
+		)
 		.reduce((a, b) => a.concat(b), []);
 
 	lines.push(...requiredPropLines);
@@ -98,6 +108,7 @@ function renderTsType(
 	const indexType = getTsIndexType(
 		name,
 		def,
+		propTypes,
 		hasParent || parentNames.has(name)
 	);
 	if (indexType) lines.push(`${SP}[key: string]: ${indexType}${ST}`);
@@ -131,10 +142,10 @@ function renderTsInheritance(
 function renderTsTypeProp(
 	prop: string,
 	info: any,
+	type: string,
 	required: boolean
 ): string[] {
 	const lines = [];
-	const type = getTSParamType(info, { prop }, true);
 	if (info.description) {
 		lines.push(`${SP}/**`);
 		lines.push(
@@ -150,40 +161,40 @@ function renderTsTypeProp(
 
 /**
  * Type of the index signature for a schema with `additionalProperties`, or
- * undefined when the schema has none.
+ * undefined when the schema has none. `propTypes` holds the rendered property types.
  */
 function getTsIndexType(
 	name: string,
 	def: any,
+	propTypes: { [prop: string]: string },
 	isInherited: boolean
 ): string | undefined {
 	const extra = def.additionalProperties;
 	if (!extra) return undefined;
-	if (extra === true || Object.keys(extra).length === 0) return 'any';
 	// TS requires every property to fit the index signature, also the properties a parent
 	// or child interface declares. Those are not known here, so allOf schemas get `any`.
 	if (isInherited) return 'any';
-	const members = new Set(getTsUnionMembers(extra, `${name}[key]`));
-	const props = def.properties || {};
+	// Every type fits `unknown`, and readers must check an unknown key before they use it.
+	if (extra === true || Object.keys(extra).length === 0) return 'unknown';
+	// Splitting the rendered types keeps the precedence of `getTSParamType`,
+	// for example `type: array` over `oneOf`.
+	const extraTypes = splitTopLevelUnion(
+		getTSParamType(extra, { prop: `${name}[key]` }, true)
+	);
+	// A union with `any` is `any`, so return it without the other members.
+	if (extraTypes.includes('any')) return 'any';
+	const members = new Set(extraTypes);
 	const required = def.required || [];
-	Object.keys(props).forEach((prop) => {
-		const types = getTsUnionMembers(props[prop], prop);
+	Object.keys(propTypes).forEach((prop) => {
+		const types = splitTopLevelUnion(propTypes[prop]);
 		// A property typed `any` fits every index signature, so it does not widen it.
 		if (!types.includes('any')) types.forEach((type) => members.add(type));
 	});
 	// Strict mode reads an optional property as `T | undefined`.
-	if (Object.keys(props).some((prop) => !required.includes(prop))) {
+	if (Object.keys(propTypes).some((prop) => !required.includes(prop))) {
 		members.add('undefined');
 	}
 	return Array.from(members).join(' | ');
-}
-
-/**
- * Members of the TS type that the property renderer gives a schema. Splitting the rendered
- * type keeps the precedence of `getTSParamType`, for example `type: array` over `oneOf`.
- */
-function getTsUnionMembers(schema: any, prop: string): string[] {
-	return splitTopLevelUnion(getTSParamType(schema, { prop }, true));
 }
 
 /** Splits a TS type at the `|` signs outside brackets and string literals. */

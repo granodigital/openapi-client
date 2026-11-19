@@ -16,8 +16,11 @@ function getBlock(contents: string, start: string, end = '}'): string {
 	return lines.slice(from, to + 1).join('\n');
 }
 
-/** Index-signature diagnostics (TS2411) of the generated types under strict checks. */
-function getIndexSignatureErrors(contents: string): string[] {
+/**
+ * Diagnostics of the generated types under strict checks, as `TS<code>: <message>`.
+ * The `namespace api` wrapper is not valid in a .d.ts file, so TS1046 and TS1038 are dropped.
+ */
+function getStrictTypeErrors(contents: string): string[] {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openapi-types-'));
 	const file = path.join(dir, 'types.d.ts');
 	fs.writeFileSync(file, contents.replace('// @ts-nocheck', ''));
@@ -28,8 +31,11 @@ function getIndexSignatureErrors(contents: string): string[] {
 	});
 	return ts
 		.getPreEmitDiagnostics(program)
-		.filter((d) => d.code === 2411)
-		.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'));
+		.filter((d) => d.code !== 1046 && d.code !== 1038)
+		.map(
+			(d) =>
+				`TS${d.code}: ${ts.flattenDiagnosticMessageText(d.messageText, '\n')}`
+		);
 }
 
 describe('genTypes', () => {
@@ -76,11 +82,22 @@ describe('genTypes', () => {
 			);
 		});
 
-		it('should add an any index signature when additionalProperties is true', () => {
+		it('should add an unknown index signature when additionalProperties is true', () => {
 			expect(getBlock(contents, 'export interface FreeForm {')).toBe(
 				[
 					'export interface FreeForm {',
 					'  name: string',
+					'  [key: string]: unknown',
+					'}',
+				].join('\n')
+			);
+		});
+
+		it('should add an any index signature when additionalProperties renders as any', () => {
+			expect(getBlock(contents, 'export interface DescribedExtra {')).toBe(
+				[
+					'export interface DescribedExtra {',
+					'  count?: number',
 					'  [key: string]: any',
 					'}',
 				].join('\n')
@@ -184,14 +201,58 @@ describe('genTypes', () => {
 			);
 		});
 
-		it('should generate index signatures that pass strict type checks', () => {
-			expect(getIndexSignatureErrors(contents)).toEqual([]);
+		it('should generate types that pass strict type checks', () => {
+			expect(getStrictTypeErrors(contents)).toEqual([]);
 		});
 
 		it('should detect an index signature that does not fit the declared properties', () => {
 			const broken =
 				'declare namespace api {\n  interface A {\n    a?: number\n    [key: string]: string\n  }\n}\n';
-			expect(getIndexSignatureErrors(broken)).toHaveLength(1);
+			const errors = getStrictTypeErrors(broken);
+			expect(errors).toHaveLength(1);
+			expect(errors[0]).toMatch(/^TS2411: /);
+		});
+
+		it('should warn once for each property without type information', () => {
+			const spec = {
+				definitions: {
+					Untyped: {
+						type: 'object',
+						properties: { legacy: {}, count: { type: 'number' } },
+						additionalProperties: { type: 'string' },
+					},
+				},
+			} as unknown as ApiSpec;
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+			try {
+				genTypesFile(spec, options);
+				expect(warn).toHaveBeenCalledTimes(1);
+			} finally {
+				warn.mockRestore();
+			}
+		});
+
+		it('should render a spec without additionalProperties like before', async () => {
+			const spec = await resolveSpec(`${__dirname}/../openapi3.yml`);
+			expect(genTypesFile(spec, options).contents).toMatchSnapshot();
+		});
+
+		it('should render object schemas without additionalProperties like before', async () => {
+			const spec = await resolveSpec(
+				`${__dirname}/../additional-properties.yml`
+			);
+			// openapi3.yml has no object schemas, so this covers the interface rendering.
+			const withoutExtra = JSON.parse(
+				JSON.stringify(spec, (key, value) =>
+					key === 'additionalProperties' ? undefined : value
+				)
+			);
+			const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+			const contents = genTypesFile(withoutExtra, options).contents;
+			warn.mockRestore();
+
+			expect(contents).not.toMatch(/^ {2}\[key: string\]/m);
+			expect(contents).toMatchSnapshot();
 		});
 	});
 });
