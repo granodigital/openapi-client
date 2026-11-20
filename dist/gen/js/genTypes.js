@@ -37,11 +37,12 @@ function renderDefinitions(spec, options) {
     const defs = spec.definitions || {};
     const typeLines = isTs ? [`namespace api {`] : undefined;
     const docLines = [];
+    const parentNames = getAllOfParentNames(defs);
     Object.keys(defs).forEach((name) => {
         debug('rendering type', name);
         const def = defs[name];
         if (isTs) {
-            typeLines.push(...renderTsType(name, def, options));
+            typeLines.push(...renderTsType(name, def, options, parentNames));
         }
         docLines.push(...renderTypeDoc(name, def));
     });
@@ -51,9 +52,17 @@ function renderDefinitions(spec, options) {
     }
     return isTs ? typeLines.concat(docLines) : docLines;
 }
-function renderTsType(name, def, options) {
+/** Names of the definitions that another definition extends with `allOf`. */
+function getAllOfParentNames(defs) {
+    const names = Object.keys(defs)
+        .map((name) => defs[name]?.allOf?.[0]?.$ref)
+        .filter((ref) => typeof ref === 'string')
+        .map((ref) => ref.split('/').pop());
+    return new Set(names);
+}
+function renderTsType(name, def, options, parentNames, hasParent = false) {
     if (def.allOf)
-        return renderTsInheritance(name, def.allOf, options);
+        return renderTsInheritance(name, def, options, parentNames);
     if (def.type !== 'object') {
         console.warn(`Unable to render ${name} ${def.type}, skipping.`);
         return [];
@@ -69,31 +78,44 @@ function renderTsType(name, def, options) {
     const props = Object.keys(def.properties || {});
     const requiredProps = props.filter((p) => !!~required.indexOf(p));
     const optionalProps = props.filter((p) => !~required.indexOf(p));
+    // Render each type once, so a property without type info warns only once.
+    const propTypes = {};
+    props.forEach((prop) => {
+        propTypes[prop] = (0, support_1.getTSParamType)(def.properties[prop], { prop }, true);
+    });
     const requiredPropLines = requiredProps
-        .map((prop) => renderTsTypeProp(prop, def.properties[prop], true))
+        .map((prop) => renderTsTypeProp(prop, def.properties[prop], propTypes[prop], true))
         .reduce((a, b) => a.concat(b), []);
     const optionalPropLines = optionalProps
-        .map((prop) => renderTsTypeProp(prop, def.properties[prop], false))
+        .map((prop) => renderTsTypeProp(prop, def.properties[prop], propTypes[prop], false))
         .reduce((a, b) => a.concat(b), []);
     lines.push(...requiredPropLines);
     lines.push(...optionalPropLines);
+    const indexType = getTsIndexType(name, def, propTypes, hasParent || parentNames.has(name));
+    if (indexType)
+        lines.push(`${support_1.SP}[key: string]: ${indexType}${support_1.ST}`);
     lines.push('}');
     lines.push('');
     return lines;
 }
-function renderTsInheritance(name, allOf, options) {
+function renderTsInheritance(name, def, options, parentNames) {
+    const { allOf } = def;
     verifyAllOf(name, allOf);
     const ref = allOf[0];
     const parentName = ref.$ref.split('/').pop();
-    const lines = renderTsType(name, allOf[1], options);
+    // `additionalProperties` can sit next to `allOf` instead of in the child schema.
+    const child = {
+        ...allOf[1],
+        additionalProperties: allOf[1].additionalProperties ?? def.additionalProperties,
+    };
+    const lines = renderTsType(name, child, options, parentNames, true);
     if (lines[0].startsWith('export interface'))
         lines.shift();
     lines.unshift(`export interface ${name} extends ${parentName} {`);
     return lines;
 }
-function renderTsTypeProp(prop, info, required) {
+function renderTsTypeProp(prop, info, type, required) {
     const lines = [];
-    const type = (0, support_1.getTSParamType)(info, { prop }, true);
     if (info.description) {
         lines.push(`${support_1.SP}/**`);
         lines.push(`${support_1.SP}${support_1.DOC}` +
@@ -103,6 +125,83 @@ function renderTsTypeProp(prop, info, required) {
     const req = required ? '' : '?';
     lines.push(`${support_1.SP}${prop}${req}: ${type}${support_1.ST}`);
     return lines;
+}
+/** Schema keywords that give a schema a type. A schema without them accepts any value. */
+const TYPE_KEYWORDS = [
+    'type',
+    '$ref',
+    'oneOf',
+    'anyOf',
+    'allOf',
+    'enum',
+    'items',
+    'properties',
+];
+/**
+ * Type of the index signature for a schema with `additionalProperties`, or
+ * undefined when the schema has none. `propTypes` holds the rendered property types.
+ */
+function getTsIndexType(name, def, propTypes, isInherited) {
+    const extra = def.additionalProperties;
+    if (!extra)
+        return undefined;
+    // TS requires every property to fit the index signature, also the properties a parent
+    // or child interface declares. Those are not known here, so allOf schemas get `any`.
+    if (isInherited)
+        return 'any';
+    // Every type fits `unknown`, and readers must check an unknown key before they use it.
+    // A schema with only annotations, such as `description`, is free-form too.
+    if (extra === true || !TYPE_KEYWORDS.some((keyword) => keyword in extra)) {
+        return 'unknown';
+    }
+    // Splitting the rendered types keeps the precedence of `getTSParamType`,
+    // for example `type: array` over `oneOf`.
+    const extraTypes = splitTopLevelUnion((0, support_1.getTSParamType)(extra, { prop: `${name}[key]` }, true));
+    // A union with `any` is `any`, so return it without the other members.
+    if (extraTypes.includes('any'))
+        return 'any';
+    const members = new Set(extraTypes);
+    const required = def.required || [];
+    Object.keys(propTypes).forEach((prop) => {
+        const types = splitTopLevelUnion(propTypes[prop]);
+        // A property typed `any` fits every index signature, so it does not widen it.
+        if (!types.includes('any'))
+            types.forEach((type) => members.add(type));
+    });
+    // Strict mode reads an optional property as `T | undefined`.
+    if (Object.keys(propTypes).some((prop) => !required.includes(prop))) {
+        members.add('undefined');
+    }
+    return Array.from(members).join(' | ');
+}
+/** Splits a TS type at the `|` signs outside brackets and string literals. */
+function splitTopLevelUnion(type) {
+    const members = [];
+    let depth = 0;
+    let quote = '';
+    let start = 0;
+    for (let i = 0; i < type.length; i++) {
+        const char = type[i];
+        if (quote) {
+            if (char === quote && type[i - 1] !== '\\')
+                quote = '';
+        }
+        else if (char === "'" || char === '"') {
+            quote = char;
+        }
+        else if ('{([<'.includes(char)) {
+            depth++;
+        }
+        else if ('})]>'.includes(char)) {
+            depth--;
+        }
+        else if (char === '|' && depth === 0) {
+            members.push(type.slice(start, i).trim());
+            start = i + 1;
+        }
+    }
+    members.push(type.slice(start).trim());
+    return members;
 }
 function renderTsDefaultTypes() {
     return `export interface OpenApiSpec {
