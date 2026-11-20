@@ -127,3 +127,12 @@ components:
           type: number
       additionalProperties:
         description: Any extra value
+    EmptyExtra:
+      type: object
+      additionalProperties: {}
+    AnyUnionExtra:
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: string
+          - {}

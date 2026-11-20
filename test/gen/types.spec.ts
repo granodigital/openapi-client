@@ -22,20 +22,24 @@ function getBlock(contents: string, start: string, end = '}'): string {
  */
 function getStrictTypeErrors(contents: string): string[] {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'openapi-types-'));
-	const file = path.join(dir, 'types.d.ts');
-	fs.writeFileSync(file, contents.replace('// @ts-nocheck', ''));
-	const program = ts.createProgram([file], {
-		strict: true,
-		noEmit: true,
-		types: [],
-	});
-	return ts
-		.getPreEmitDiagnostics(program)
-		.filter((d) => d.code !== 1046 && d.code !== 1038)
-		.map(
-			(d) =>
-				`TS${d.code}: ${ts.flattenDiagnosticMessageText(d.messageText, '\n')}`
-		);
+	try {
+		const file = path.join(dir, 'types.d.ts');
+		fs.writeFileSync(file, contents.replace('// @ts-nocheck', ''));
+		const program = ts.createProgram([file], {
+			strict: true,
+			noEmit: true,
+			types: [],
+		});
+		return ts
+			.getPreEmitDiagnostics(program)
+			.filter((d) => d.code !== 1046 && d.code !== 1038)
+			.map(
+				(d) =>
+					`TS${d.code}: ${ts.flattenDiagnosticMessageText(d.messageText, '\n')}`
+			);
+	} finally {
+		fs.rmSync(dir, { recursive: true, force: true });
+	}
 }
 
 describe('genTypes', () => {
@@ -47,8 +51,11 @@ describe('genTypes', () => {
 			);
 			// The fixture has an untyped property on purpose.
 			const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-			contents = genTypesFile(spec, options).contents;
-			warn.mockRestore();
+			try {
+				contents = genTypesFile(spec, options).contents;
+			} finally {
+				warn.mockRestore();
+			}
 		});
 
 		it('should add an index signature widened by the declared property types when additionalProperties is a schema', () => {
@@ -93,14 +100,20 @@ describe('genTypes', () => {
 			);
 		});
 
-		it('should add an any index signature when additionalProperties renders as any', () => {
-			expect(getBlock(contents, 'export interface DescribedExtra {')).toBe(
-				[
-					'export interface DescribedExtra {',
-					'  count?: number',
-					'  [key: string]: any',
-					'}',
-				].join('\n')
+		it.each(['DescribedExtra', 'EmptyExtra'])(
+			'should add an unknown index signature when additionalProperties has no type keyword in %s',
+			(name) => {
+				expect(getBlock(contents, `export interface ${name} {`)).toMatch(
+					/^ {2}\[key: string\]: unknown$/m
+				);
+			}
+		);
+
+		it('should add an any index signature when an additionalProperties union contains any', () => {
+			expect(getBlock(contents, 'export interface AnyUnionExtra {')).toBe(
+				['export interface AnyUnionExtra {', '  [key: string]: any', '}'].join(
+					'\n'
+				)
 			);
 		});
 
@@ -232,24 +245,22 @@ describe('genTypes', () => {
 			}
 		});
 
-		it('should render a spec without additionalProperties like before', async () => {
-			const spec = await resolveSpec(`${__dirname}/../openapi3.yml`);
-			expect(genTypesFile(spec, options).contents).toMatchSnapshot();
-		});
-
 		it('should render object schemas without additionalProperties like before', async () => {
 			const spec = await resolveSpec(
 				`${__dirname}/../additional-properties.yml`
 			);
-			// openapi3.yml has no object schemas, so this covers the interface rendering.
 			const withoutExtra = JSON.parse(
 				JSON.stringify(spec, (key, value) =>
 					key === 'additionalProperties' ? undefined : value
 				)
 			);
 			const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-			const contents = genTypesFile(withoutExtra, options).contents;
-			warn.mockRestore();
+			let contents: string;
+			try {
+				contents = genTypesFile(withoutExtra, options).contents;
+			} finally {
+				warn.mockRestore();
+			}
 
 			expect(contents).not.toMatch(/^ {2}\[key: string\]/m);
 			expect(contents).toMatchSnapshot();

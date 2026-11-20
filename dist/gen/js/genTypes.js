@@ -126,6 +126,17 @@ function renderTsTypeProp(prop, info, type, required) {
     lines.push(`${support_1.SP}${prop}${req}: ${type}${support_1.ST}`);
     return lines;
 }
+/** Schema keywords that give a schema a type. A schema without them accepts any value. */
+const TYPE_KEYWORDS = [
+    'type',
+    '$ref',
+    'oneOf',
+    'anyOf',
+    'allOf',
+    'enum',
+    'items',
+    'properties',
+];
 /**
  * Type of the index signature for a schema with `additionalProperties`, or
  * undefined when the schema has none. `propTypes` holds the rendered property types.
@@ -139,8 +150,10 @@ function getTsIndexType(name, def, propTypes, isInherited) {
     if (isInherited)
         return 'any';
     // Every type fits `unknown`, and readers must check an unknown key before they use it.
-    if (extra === true || Object.keys(extra).length === 0)
+    // A schema with only annotations, such as `description`, is free-form too.
+    if (extra === true || !TYPE_KEYWORDS.some((keyword) => keyword in extra)) {
         return 'unknown';
+    }
     // Splitting the rendered types keeps the precedence of `getTSParamType`,
     // for example `type: array` over `oneOf`.
     const extraTypes = splitTopLevelUnion((0, support_1.getTSParamType)(extra, { prop: `${name}[key]` }, true));
